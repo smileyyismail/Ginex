@@ -34,8 +34,8 @@ export async function createCategory(formData: FormData) {
     
     revalidatePath('/admin');
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server error' };
+  } catch (err) {
+    return { success: false, error: (err as Error).message || 'Server error' };
   }
 }
 
@@ -66,8 +66,8 @@ export async function updateCategory(id: string, formData: FormData) {
 
     revalidatePath('/admin');
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server error' };
+  } catch (err) {
+    return { success: false, error: (err as Error).message || 'Server error' };
   }
 }
 
@@ -91,7 +91,7 @@ export async function deleteCategory(id: string) {
 
     revalidatePath('/admin');
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server error' };
+  } catch (err) {
+    return { success: false, error: (err as Error).message || 'Server error' };
   }
 }

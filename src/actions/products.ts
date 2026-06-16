@@ -14,6 +14,16 @@ export async function getProducts() {
   return data;
 }
 
+export async function getPublicProducts() {
+  const { data, error } = await supabaseAdmin
+    .from('products')
+    .select('*, category:categories(name), brand:brands(name)')
+    .eq('status', 'Display')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function getProduct(slug: string) {
   const { data, error } = await supabaseAdmin
     .from('products')
@@ -57,8 +67,8 @@ export async function createProduct(formData: FormData, images: string[], specs:
 
     revalidatePath('/admin');
     return { success: true, data: product };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server error' };
+  } catch (err) {
+    return { success: false, error: (err as Error).message || 'Server error' };
   }
 }
 
@@ -113,8 +123,8 @@ export async function updateProduct(id: string, formData: FormData, images: stri
     revalidatePath(`/products/${slug}`);
     
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server error' };
+  } catch (err) {
+    return { success: false, error: (err as Error).message || 'Server error' };
   }
 }
 
@@ -144,7 +154,7 @@ export async function deleteProduct(id: string) {
     revalidatePath('/products');
     
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Server error' };
+  } catch (err) {
+    return { success: false, error: (err as Error).message || 'Server error' };
   }
 }

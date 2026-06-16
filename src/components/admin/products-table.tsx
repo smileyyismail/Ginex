@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,15 +11,17 @@ import { createProduct, updateProduct, deleteProduct, getProduct } from '@/actio
 import { uploadImage } from '@/lib/storage';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
+import Image from 'next/image';
+import { Product, Category, Brand } from '@/lib/types';
 
-export function ProductsTable({ initialData, categories, brands }: { initialData: any[], categories: any[], brands: any[] }) {
+export function ProductsTable({ initialData, categories, brands }: { initialData: Product[], categories: Category[], brands: Brand[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({ 
     name: '', slug: '', description: '', category_id: '', brand_id: '', 
-    featured_image_url: '', badge: 'None', status: 'Active' 
+    featured_image_url: '', badge: 'None', status: 'Display' 
   });
   const [specs, setSpecs] = useState<Record<string, string>>({});
   const [newSpecKey, setNewSpecKey] = useState('');
@@ -34,7 +36,7 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
 
   async function handleEditClick(id: string) {
     try {
-      const fullProduct = await getProduct(initialData.find(p => p.id === id).slug);
+      const fullProduct = await getProduct(initialData.find(p => p.id === id)!.slug);
       
       setFormData({ 
         name: fullProduct.name, slug: fullProduct.slug, description: fullProduct.description || '', 
@@ -49,15 +51,15 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
       setExistingGalleryImages(fullProduct.images || []);
       setGalleryFiles([]);
       setIsOpen(true);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error((error as Error).message);
     }
   }
 
   function handleOpenCreate() {
     setFormData({ 
       name: '', slug: '', description: '', category_id: '', brand_id: '', 
-      featured_image_url: '', badge: 'None', status: 'Active' 
+      featured_image_url: '', badge: 'None', status: 'Display' 
     });
     setSpecs({});
     setFeatures([]);
@@ -104,8 +106,8 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
         toast.success("Product created");
       }
       setIsOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'An error occurred');
+    } catch (err) {
+      toast.error((err as Error).message || 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -117,8 +119,8 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
         const res = await deleteProduct(id);
         if (res?.error) toast.error(res.error);
         else toast.success("Product deleted");
-      } catch (err: any) {
-        toast.error(err.message || 'An error occurred');
+      } catch (err) {
+        toast.error((err as Error).message || 'An error occurred');
       }
     }
   }
@@ -166,22 +168,22 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Products</h2>
-          <p className="text-zinc-500 text-sm mt-1">Manage your product catalog and inventory.</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-text-primary">Products</h2>
+          <p className="text-text-secondary text-sm mt-1">Manage your product catalog and inventory.</p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
             Add Product
           </DialogTrigger>
           <DialogContent className="max-w-5xl md:max-w-5xl w-full max-h-[90vh] overflow-y-auto p-0">
-            <div className="p-6 border-b sticky top-0 bg-white z-10">
+            <div className="p-6 border-b sticky top-0 bg-surface z-10">
               <DialogTitle className="text-2xl">{editingId ? 'Edit Product' : 'New Product'}</DialogTitle>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               
               {/* Row 1: Product Name, URL Slug */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-sm font-semibold mb-1.5 block">Product Name</label>
                   <Input 
@@ -218,7 +220,7 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
               </div>
 
               {/* Row 3: Category, Brand */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-sm font-semibold mb-1.5 block">Category</label>
                   <Select value={formData.category_id} onValueChange={(val) => setFormData({...formData, category_id: val as string})}>
@@ -248,7 +250,7 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
               </div>
 
               {/* Row 4: Status, Badge */}
-              <div className="grid grid-cols-2 gap-6 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
                 <div>
                   <label className="text-sm font-semibold mb-1.5 block">Status</label>
                   <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val as string})}>
@@ -256,8 +258,8 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Display">Display</SelectItem>
+                      <SelectItem value="Hide">Hide</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -278,21 +280,21 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
               </div>
 
               {/* Row 5: Thumbnail Image */}
-              <div className="p-4 border rounded-xl bg-zinc-50/50">
+              <div className="p-4 border rounded-xl bg-surface-elevated/50">
                 <label className="text-sm font-semibold mb-1.5 block">Featured Thumbnail</label>
                 {featuredFile ? (
                   <div className="mb-3">
-                    <img src={URL.createObjectURL(featuredFile)} alt="Featured Preview" className="h-20 w-20 object-cover rounded-lg border bg-white shadow-sm" />
+                    <Image unoptimized src={URL.createObjectURL(featuredFile)} alt="Featured Preview" width={80} height={80} className="h-20 w-20 object-cover rounded-lg border bg-surface shadow-sm" />
                   </div>
-                ) : formData.featured_image_url ? (
+                ) : formData.featured_image_url && formData.featured_image_url !== 'null' ? (
                   <div className="mb-3">
-                    <img src={formData.featured_image_url} alt="Featured" className="h-20 w-20 object-cover rounded-lg border bg-white shadow-sm" />
+                    <Image src={formData.featured_image_url} alt="Featured" width={80} height={80} className="h-20 w-20 object-cover rounded-lg border bg-surface shadow-sm" />
                   </div>
                 ) : null}
                 <Input 
                   type="file" 
                   accept="image/*"
-                  className="bg-white"
+                  className="bg-surface"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) setFeaturedFile(e.target.files[0]);
                   }}
@@ -300,12 +302,12 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
               </div>
 
               {/* Row 6: Gallery Images */}
-              <div className="p-4 border rounded-xl bg-zinc-50/50">
+              <div className="p-4 border rounded-xl bg-surface-elevated/50">
                 <label className="text-sm font-semibold mb-1.5 block">Gallery Images</label>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {existingGalleryImages.map((url, idx) => (
                     <div key={url} className="relative group">
-                      <img src={url} alt={`Gallery ${idx}`} className="h-16 w-16 object-cover rounded-lg border bg-white shadow-sm" />
+                      <Image src={url} alt={`Gallery ${idx}`} width={64} height={64} className="h-16 w-16 object-cover rounded-lg border bg-surface shadow-sm" />
                       <button 
                         type="button" 
                         onClick={() => removeGalleryImage(idx)}
@@ -317,7 +319,7 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
                   ))}
                   {galleryFiles.map((file, idx) => (
                     <div key={idx} className="relative group">
-                      <img src={URL.createObjectURL(file)} alt={`Gallery Preview ${idx}`} className="h-16 w-16 object-cover rounded-lg border bg-zinc-200 shadow-sm" />
+                      <Image unoptimized src={URL.createObjectURL(file)} alt={`Gallery Preview ${idx}`} width={64} height={64} className="h-16 w-16 object-cover rounded-lg border bg-zinc-200 shadow-sm" />
                       <button 
                         type="button" 
                         onClick={() => removeGalleryFile(idx)}
@@ -332,7 +334,7 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
                   type="file" 
                   accept="image/*"
                   multiple
-                  className="bg-white"
+                  className="bg-surface"
                   onChange={(e) => {
                     if (e.target.files) {
                       const newFiles = Array.from(e.target.files);
@@ -350,10 +352,10 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
                   <Input placeholder="Value (e.g. Black)" value={newSpecValue} onChange={e => setNewSpecValue(e.target.value)} />
                   <Button type="button" onClick={addSpec} variant="secondary">Add</Button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {Object.entries(specs).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center bg-zinc-50 p-2 rounded-md border">
-                      <span className="text-sm truncate"><span className="font-semibold text-zinc-700">{key}:</span> {value}</span>
+                    <div key={key} className="flex justify-between items-center bg-surface-elevated p-2 rounded-md border">
+                      <span className="text-sm truncate"><span className="font-semibold text-text-primary">{key}:</span> {value}</span>
                       <button type="button" className="text-red-500 hover:text-red-700 p-1" onClick={() => removeSpec(key)}><X className="w-4 h-4"/></button>
                     </div>
                   ))}
@@ -369,7 +371,7 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
                 </div>
                 <div className="space-y-2">
                   {features.map((feature, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-zinc-50 p-2 rounded-md border">
+                    <div key={idx} className="flex justify-between items-center bg-surface-elevated p-2 rounded-md border">
                       <span className="text-sm truncate pr-4">{feature}</span>
                       <button type="button" className="text-red-500 hover:text-red-700 p-1 flex-shrink-0" onClick={() => removeFeature(idx)}><X className="w-4 h-4"/></button>
                     </div>
@@ -387,9 +389,10 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
         </Dialog>
       </div>
       
-      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader className="bg-zinc-50/50">
+      <div className="bg-surface rounded-xl border border-border-subtle shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+          <TableHeader className="bg-surface-elevated/50">
             <TableRow>
               <TableHead>Image</TableHead>
               <TableHead>Name</TableHead>
@@ -403,17 +406,17 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
             {initialData.map((prod) => (
               <TableRow key={prod.id}>
                 <TableCell>
-                  {prod.featured_image_url ? (
-                    <img src={prod.featured_image_url} alt={prod.name} className="h-10 w-10 object-cover rounded border" />
+                  {prod.featured_image_url && prod.featured_image_url !== 'null' ? (
+                    <Image src={prod.featured_image_url} alt={prod.name} width={40} height={40} className="h-10 w-10 object-cover rounded border" />
                   ) : (
-                    <div className="h-10 w-10 bg-zinc-100 rounded border flex items-center justify-center text-xs text-zinc-400">N/A</div>
+                    <div className="h-10 w-10 bg-surface-elevated rounded border flex items-center justify-center text-xs text-text-secondary">N/A</div>
                   )}
                 </TableCell>
-                <TableCell className="font-medium text-zinc-900">{prod.name}</TableCell>
-                <TableCell className="text-zinc-600">{prod.category?.name || 'N/A'}</TableCell>
-                <TableCell className="text-zinc-600">{prod.brand?.name || 'N/A'}</TableCell>
+                <TableCell className="font-medium text-text-primary">{prod.name}</TableCell>
+                <TableCell className="text-text-secondary">{prod.category?.name || 'N/A'}</TableCell>
+                <TableCell className="text-text-secondary">{prod.brand?.name || 'N/A'}</TableCell>
                 <TableCell>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${prod.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-700'}`}>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${prod.status === 'Display' ? 'bg-brand/20 text-brand' : 'bg-surface-elevated text-text-primary'}`}>
                     {prod.status}
                   </span>
                 </TableCell>
@@ -425,11 +428,12 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
             ))}
             {initialData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-zinc-500">No products found.</TableCell>
+                <TableCell colSpan={6} className="text-center py-12 text-text-secondary">No products found.</TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );

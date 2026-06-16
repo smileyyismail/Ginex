@@ -9,8 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { createBrand, updateBrand, deleteBrand } from '@/actions/brands';
 import { uploadImage } from '@/lib/storage';
 import { toast } from 'sonner';
+import Image from 'next/image';
+import { Brand } from '@/lib/types';
 
-export function BrandsTable({ initialData }: { initialData: any[] }) {
+export function BrandsTable({ initialData }: { initialData: Brand[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', logo_url: '' });
@@ -45,8 +47,8 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
       setIsOpen(false);
       setEditingId(null);
       setFile(null);
-    } catch (err: any) {
-      toast.error(err.message || 'An error occurred');
+    } catch (err) {
+      toast.error((err as Error).message || 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -58,8 +60,8 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
         const res = await deleteBrand(id);
         if (res?.error) toast.error(res.error);
         else toast.success("Brand deleted");
-      } catch (err: any) {
-        toast.error(err.message || 'An error occurred');
+      } catch (err) {
+        toast.error((err as Error).message || 'An error occurred');
       }
     }
   }
@@ -71,7 +73,7 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
     setIsOpen(true);
   }
 
-  function handleEditClick(brand: any) {
+  function handleEditClick(brand: Brand) {
     setFormData({ name: brand.name, slug: brand.slug, description: brand.description || '', logo_url: brand.logo_url || '' });
     setEditingId(brand.id);
     setFile(null);
@@ -82,8 +84,8 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Brands</h2>
-          <p className="text-zinc-500 text-sm mt-1">Manage the brands associated with your products.</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-text-primary">Brands</h2>
+          <p className="text-text-secondary text-sm mt-1">Manage the brands associated with your products.</p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
@@ -123,17 +125,17 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
 
               <div>
                 <label className="text-sm font-semibold mb-1.5 block">Brand Logo</label>
-                <div className="flex items-center gap-6 p-4 border rounded-xl bg-zinc-50">
+                <div className="flex items-center gap-6 p-4 border rounded-xl bg-surface-elevated">
                   {file ? (
-                    <div className="h-16 w-16 flex-shrink-0 bg-white border rounded-lg flex items-center justify-center overflow-hidden">
-                      <img src={URL.createObjectURL(file)} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
+                    <div className="h-16 w-16 flex-shrink-0 bg-surface border rounded-lg flex items-center justify-center overflow-hidden relative">
+                      <Image unoptimized src={URL.createObjectURL(file)} alt="Logo Preview" fill className="object-contain" />
                     </div>
                   ) : formData.logo_url ? (
-                    <div className="h-16 w-16 flex-shrink-0 bg-white border rounded-lg flex items-center justify-center overflow-hidden">
-                      <img src={formData.logo_url} alt="Logo" className="max-h-full max-w-full object-contain" />
+                    <div className="h-16 w-16 flex-shrink-0 bg-surface border rounded-lg flex items-center justify-center overflow-hidden relative">
+                      <Image src={formData.logo_url} alt="Logo" fill className="object-contain" />
                     </div>
                   ) : (
-                    <div className="h-16 w-16 flex-shrink-0 bg-white border border-dashed rounded-lg flex items-center justify-center text-xs text-zinc-400">
+                    <div className="h-16 w-16 flex-shrink-0 bg-surface border border-dashed rounded-lg flex items-center justify-center text-xs text-text-secondary">
                       No Image
                     </div>
                   )}
@@ -141,14 +143,14 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
                     <Input 
                       type="file" 
                       accept="image/*"
-                      className="bg-white"
+                      className="bg-surface"
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           setFile(e.target.files[0]);
                         }
                       }}
                     />
-                    <p className="text-xs text-zinc-500 mt-2">Recommended size: 256x256px or larger, transparent PNG.</p>
+                    <p className="text-xs text-text-secondary mt-2">Recommended size: 256x256px or larger, transparent PNG.</p>
                   </div>
                 </div>
               </div>
@@ -174,9 +176,9 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
         </Dialog>
       </div>
       
-      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border-subtle shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-zinc-50/50">
+          <TableHeader className="bg-surface-elevated/50">
             <TableRow>
               <TableHead>Logo</TableHead>
               <TableHead>Name</TableHead>
@@ -189,13 +191,13 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
               <TableRow key={brand.id}>
                 <TableCell>
                   {brand.logo_url ? (
-                    <img src={brand.logo_url} alt={brand.name} className="h-8 w-8 object-contain" />
+                    <Image src={brand.logo_url} alt={brand.name} width={32} height={32} className="h-8 w-8 object-contain" />
                   ) : (
-                    <div className="h-8 w-8 bg-zinc-100 rounded-full flex items-center justify-center text-xs text-zinc-400">N/A</div>
+                    <div className="h-8 w-8 bg-surface-elevated rounded-full flex items-center justify-center text-xs text-text-secondary">N/A</div>
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{brand.name}</TableCell>
-                <TableCell className="text-zinc-500">{brand.slug}</TableCell>
+                <TableCell className="text-text-secondary">{brand.slug}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" onClick={() => handleEditClick(brand)}>Edit</Button>
                   <Button variant="destructive" size="sm" onClick={() => handleDelete(brand.id)}>Delete</Button>
@@ -204,7 +206,7 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
             ))}
             {initialData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12 text-zinc-500">No brands found.</TableCell>
+                <TableCell colSpan={4} className="text-center py-12 text-text-secondary">No brands found.</TableCell>
               </TableRow>
             )}
           </TableBody>
