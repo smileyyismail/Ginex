@@ -170,8 +170,8 @@ export function ProductsTable({ initialData, categories, brands }: { initialData
           <p className="text-zinc-500 text-sm mt-1">Manage your product catalog and inventory.</p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenCreate}>Add Product</Button>
+          <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
+            Add Product
           </DialogTrigger>
           <DialogContent className="max-w-5xl md:max-w-5xl w-full max-h-[90vh] overflow-y-auto p-0">
             <div className="p-6 border-b sticky top-0 bg-white z-10">

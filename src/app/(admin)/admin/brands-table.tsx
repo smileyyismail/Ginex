@@ -86,8 +86,8 @@ export function BrandsTable({ initialData }: { initialData: any[] }) {
           <p className="text-zinc-500 text-sm mt-1">Manage the brands associated with your products.</p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenCreate}>Add Brand</Button>
+          <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
+            Add Brand
           </DialogTrigger>
           <DialogContent className="max-w-2xl md:max-w-2xl w-full">
             <DialogHeader>

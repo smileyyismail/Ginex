@@ -86,8 +86,8 @@ export function CategoriesTable({ initialData }: { initialData: any[] }) {
           <p className="text-zinc-500 text-sm mt-1">Manage the product categories in your store.</p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenCreate}>Add Category</Button>
+          <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
+            Add Category
           </DialogTrigger>
           <DialogContent className="max-w-2xl md:max-w-2xl w-full">
             <DialogHeader>
