@@ -6,12 +6,43 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, className = '' }: EmptyStateProps) {
   return (
-    <div className={`bg-surface border border-border-subtle rounded-3xl p-16 text-center shadow-sm flex flex-col items-center justify-center ${className}`}>
-      <div className="w-16 h-16 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center mb-6 shadow-[0_0_15px_var(--brand-glow)]">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+    <div
+      className={`rounded-3xl p-16 text-center flex flex-col items-center justify-center ${className}`}
+      style={{
+        background: 'rgba(17,17,17,0.8)',
+        border: '1px solid rgba(212,175,55,0.1)',
+      }}
+    >
+      {/* Gold glow icon ring */}
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+        style={{
+          background: 'rgba(212,175,55,0.06)',
+          border: '1px solid rgba(212,175,55,0.2)',
+          boxShadow: '0 0 30px rgba(212,175,55,0.1)',
+        }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#D4AF37"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" x2="16.65" y1="21" y2="16.65" />
+        </svg>
       </div>
-      <h3 className="text-2xl font-bold text-text-primary mb-3 tracking-tight">{title}</h3>
-      {description && <p className="text-text-secondary max-w-sm mx-auto font-light">{description}</p>}
+      <h3 className="text-2xl font-bold text-white mb-3 tracking-tight font-heading">{title}</h3>
+      {description && (
+        <p className="text-[#A1A1AA] max-w-sm mx-auto font-light leading-relaxed text-sm">
+          {description}
+        </p>
+      )}
     </div>
   );
 }
