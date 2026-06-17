@@ -1,23 +1,27 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createCategory, updateCategory, deleteCategory } from '@/actions/categories';
-import { uploadImage } from '@/lib/storage';
+import { uploadImage } from '@/actions/storage';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Category } from '@/lib/types';
+import { useObjectUrl } from './use-object-url';
 
 export function CategoriesTable({ initialData }: { initialData: Category[] }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', image_url: '' });
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const previewUrl = useObjectUrl(file);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,6 +51,7 @@ export function CategoriesTable({ initialData }: { initialData: Category[] }) {
       setIsOpen(false);
       setEditingId(null);
       setFile(null);
+      router.refresh();
     } catch (err) {
       toast.error((err as Error).message || 'An error occurred');
     } finally {
@@ -59,7 +64,10 @@ export function CategoriesTable({ initialData }: { initialData: Category[] }) {
       try {
         const res = await deleteCategory(id);
         if (res?.error) toast.error(res.error);
-        else toast.success("Category deleted");
+        else {
+          toast.success("Category deleted");
+          router.refresh();
+        }
       } catch (err) {
         toast.error((err as Error).message || 'An error occurred');
       }
@@ -126,9 +134,9 @@ export function CategoriesTable({ initialData }: { initialData: Category[] }) {
               <div>
                 <label className="text-sm font-semibold mb-1.5 block">Category Image</label>
                 <div className="flex items-center gap-6 p-4 border rounded-xl bg-surface-elevated">
-                  {file ? (
+                  {file && previewUrl ? (
                     <div className="h-16 w-16 flex-shrink-0 bg-surface border rounded-lg flex items-center justify-center overflow-hidden relative">
-                      <Image unoptimized src={URL.createObjectURL(file)} alt="Category Preview" fill className="object-cover" />
+                      <Image unoptimized src={previewUrl} alt="Category Preview" fill className="object-cover" />
                     </div>
                   ) : formData.image_url ? (
                     <div className="h-16 w-16 flex-shrink-0 bg-surface border rounded-lg flex items-center justify-center overflow-hidden relative">

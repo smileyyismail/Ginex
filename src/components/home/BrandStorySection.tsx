@@ -59,7 +59,7 @@ export function BrandStorySection() {
         {/* Philosophy text */}
         <ScrollReveal delay={350} className="mt-10 max-w-2xl mx-auto text-center">
           <p className="text-[#A1A1AA] text-lg md:text-xl leading-relaxed font-light">
-            We don&apos;t just source accessories — we curate experiences. Every product in the Ginex catalog has been hand-selected, rigorously tested, and verified to meet the exacting standards of those who demand only the best for their devices.
+            We don&apos;t just source accessories - we curate experiences. Every product in the Ginex catalog has been hand-selected, rigorously tested, and verified to meet the exacting standards of those who demand only the best for their devices.
           </p>
         </ScrollReveal>
 
@@ -69,7 +69,7 @@ export function BrandStorySection() {
             { number: '100%', label: 'Genuine Products', sub: 'Authenticated & verified' },
             { number: '50+', label: 'Premium Brands', sub: 'Curated from the best' },
             { number: '10K+', label: 'Happy Customers', sub: 'Across India' },
-          ].map(({ number, label, sub }, i) => (
+          ].map(({ number, label, sub }) => (
             <div key={label} className="text-center py-8 sm:py-0 px-8 first:border-t-0 border-t sm:border-t-0 border-[rgba(212,175,55,0.12)]">
               <div
                 className="text-5xl md:text-6xl font-black font-heading mb-2"

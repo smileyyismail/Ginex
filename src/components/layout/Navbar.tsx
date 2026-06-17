@@ -1,9 +1,15 @@
 'use client';
 
 import Link from "next/link";
-import { Phone, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ArrowRight, Menu, Phone, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+
+const navLinks = [
+  { name: 'Home', path: '/' },
+  { name: 'Products', path: '/products' },
+  { name: 'About Us', path: '/about' },
+];
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,46 +22,33 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Products', path: '/products' },
-    { name: 'About Us', path: '/about' },
-  ];
-
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-500 ${
         isScrolled
-          ? 'bg-[#0A0A0A]/95 backdrop-blur-2xl border-b border-[rgba(212,175,55,0.15)] shadow-[0_4px_30px_rgba(0,0,0,0.4)]'
-          : 'bg-transparent border-b border-transparent'
+          ? 'border-b border-[rgba(212,175,55,0.15)] bg-[#0A0A0A]/95 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-2xl'
+          : 'border-b border-transparent bg-transparent'
       }`}
     >
-      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-
-        {/* Logo */}
+      <div className="container mx-auto flex h-20 items-center justify-between px-4">
         <Link
           href="/"
-          className="relative flex items-baseline gap-0.5 z-50 group"
+          className="group relative z-50 flex items-baseline gap-0.5"
           aria-label="Ginex Home"
+          onClick={() => setIsMobileMenuOpen(false)}
         >
-          <span className="text-2xl font-black tracking-tighter text-white font-heading transition-all duration-300 group-hover:text-[#F4D03F]">
+          <span className="font-heading text-2xl font-black tracking-tight text-white transition-all duration-300 group-hover:text-[#F4D03F]">
             GINEX
           </span>
           <span
-            className="text-[#D4AF37] text-3xl font-black leading-none"
+            className="text-3xl font-black leading-none text-[#D4AF37]"
             style={{ textShadow: '0 0 12px rgba(212,175,55,0.6)' }}
           >
             .
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-10 text-sm font-semibold tracking-wider">
+        <div className="hidden items-center gap-10 text-sm font-semibold tracking-wider md:flex">
           {navLinks.map((link) => {
             const isActive =
               pathname === link.path ||
@@ -64,16 +57,15 @@ export function Navbar() {
               <Link
                 key={link.name}
                 href={link.path}
-                className={`relative py-2 uppercase text-xs tracking-widest transition-colors duration-300 ${
-                  isActive
-                    ? 'text-[#D4AF37]'
-                    : 'text-[#A1A1AA] hover:text-white'
+                className={`relative py-2 text-xs uppercase tracking-widest transition-colors duration-300 ${
+                  isActive ? 'text-[#D4AF37]' : 'text-[#A1A1AA] hover:text-white'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
                 {link.name}
                 {isActive && (
                   <span
-                    className="absolute bottom-0 left-0 w-full h-[2px] rounded-full"
+                    className="absolute bottom-0 left-0 h-[2px] w-full rounded-full"
                     style={{
                       background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)',
                       boxShadow: '0 0 8px rgba(212,175,55,0.8)',
@@ -85,56 +77,46 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center gap-4 z-50">
+        <div className="z-50 hidden items-center gap-4 md:flex">
           <a
             href="https://wa.me/919392920252"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest text-black transition-all duration-300 hover:-translate-y-0.5"
-            style={{
-              background: 'linear-gradient(135deg, #D4AF37, #F4D03F)',
-              boxShadow: '0 4px 15px rgba(212,175,55,0.3)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 25px rgba(212,175,55,0.5)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 15px rgba(212,175,55,0.3)';
-            }}
+            className="flex items-center gap-2 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#F4D03F] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-black shadow-[0_4px_15px_rgba(212,175,55,0.3)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(212,175,55,0.5)]"
           >
-            <Phone className="w-3.5 h-3.5" />
+            <Phone className="h-3.5 w-3.5" />
             <span>Contact Us</span>
           </a>
         </div>
 
-        {/* Mobile Hamburger */}
         <button
+          type="button"
           aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-          className="md:hidden z-50 w-10 h-10 flex items-center justify-center rounded-full border border-[rgba(212,175,55,0.2)] text-[#A1A1AA] hover:text-[#D4AF37] hover:border-[rgba(212,175,55,0.5)] transition-all duration-300"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-navigation"
+          className="z-50 flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(212,175,55,0.2)] text-[#A1A1AA] transition-all duration-300 hover:border-[rgba(212,175,55,0.5)] hover:text-[#D4AF37] md:hidden"
+          onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
         >
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <div
-        className={`md:hidden fixed inset-0 top-20 z-40 flex flex-col transition-all duration-500 ${
+        id="mobile-navigation"
+        className={`fixed inset-0 top-20 z-40 flex flex-col transition-all duration-500 md:hidden ${
           isMobileMenuOpen
-            ? 'opacity-100 pointer-events-auto'
-            : 'opacity-0 pointer-events-none'
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0'
         }`}
         style={{ background: 'rgba(10,10,10,0.98)', backdropFilter: 'blur(24px)' }}
       >
-        {/* Gold line at top */}
         <div
-          className="w-full h-px"
+          className="h-px w-full"
           style={{ background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }}
         />
 
-        <div className="flex flex-col p-8 space-y-1 flex-1">
-          {navLinks.map((link, i) => {
+        <div className="flex flex-1 flex-col space-y-1 p-8">
+          {navLinks.map((link, index) => {
             const isActive =
               pathname === link.path ||
               (link.path !== '/' && pathname?.startsWith(link.path));
@@ -143,33 +125,32 @@ export function Navbar() {
                 key={link.name}
                 href={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center justify-between py-5 border-b border-[rgba(212,175,55,0.1)] transition-all duration-300 group ${
+                className={`group flex min-h-14 items-center justify-between border-b border-[rgba(212,175,55,0.1)] py-5 transition-all duration-300 ${
                   isActive ? 'text-[#D4AF37]' : 'text-white hover:text-[#D4AF37]'
                 }`}
-                style={{ animationDelay: `${i * 80}ms` }}
+                style={{ animationDelay: `${index * 80}ms` }}
+                aria-current={isActive ? 'page' : undefined}
               >
-                <span className="text-2xl font-black tracking-tight font-heading">
+                <span className="font-heading text-2xl font-black tracking-tight">
                   {link.name}
                 </span>
-                <span className={`text-[#D4AF37] transition-transform duration-300 group-hover:translate-x-1 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                  →
-                </span>
+                <ArrowRight
+                  className={`h-5 w-5 text-[#D4AF37] transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100 ${
+                    isActive ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
               </Link>
             );
           })}
 
-          <div className="pt-10 mt-auto">
+          <div className="mt-auto pt-10">
             <a
               href="https://wa.me/919392920252"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-3 w-full px-6 py-4 rounded-2xl text-base font-bold uppercase tracking-widest text-black transition-all duration-300"
-              style={{
-                background: 'linear-gradient(135deg, #D4AF37, #F4D03F)',
-                boxShadow: '0 4px 20px rgba(212,175,55,0.4)',
-              }}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#F4D03F] px-6 py-4 text-base font-bold uppercase tracking-widest text-black shadow-[0_4px_20px_rgba(212,175,55,0.4)] transition-all duration-300"
             >
-              <Phone className="w-5 h-5" />
+              <Phone className="h-5 w-5" />
               <span>Contact Us on WhatsApp</span>
             </a>
           </div>

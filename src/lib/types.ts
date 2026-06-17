@@ -1,3 +1,22 @@
+// ─── Enums / Literal Types ────────────────────────────────────────────────────
+/** Controls visibility on the public storefront. */
+export type ProductStatus = 'Display' | 'Hide';
+
+/** Promotional badge displayed on product cards. */
+export type ProductBadge = 'None' | 'Trending' | 'New' | 'Best Seller';
+
+/**
+ * Flexible specification map.
+ * Different product categories use different keys — no fixed structure is enforced.
+ * Examples:
+ *   Cable:      { "Model": "GX-25CL", "Connector": "USB-C to Lightning", "Charging Power": "35W" }
+ *   Charger:    { "Output": "65W", "Ports": "USB-C + USB-A" }
+ *   Power Bank: { "Capacity": "10000mAh", "Battery Type": "Lithium Polymer" }
+ */
+export type ProductSpecifications = Record<string, string>;
+
+// ─── Core Entities ────────────────────────────────────────────────────────────
+
 export interface Category {
   id: string;
   name: string;
@@ -5,6 +24,7 @@ export interface Category {
   description?: string;
   image_url?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface Brand {
@@ -14,6 +34,7 @@ export interface Brand {
   description?: string;
   logo_url?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface Product {
@@ -21,15 +42,43 @@ export interface Product {
   name: string;
   slug: string;
   description?: string;
-  category_id?: string;
-  brand_id?: string;
-  featured_image_url?: string;
-  badge?: string;
-  status?: string;
-  specifications?: Record<string, string>;
-  features?: string[];
-  images?: string[];
-  category?: Category;
-  brand?: Brand;
+  /** Foreign key → categories.id. Required when creating/updating. */
+  category_id: string;
+  /** Foreign key → brands.id. Required when creating/updating. */
+  brand_id: string;
+  /** Primary display image URL. Required. */
+  featured_image_url: string;
+  /** Gallery images. Defaults to []. */
+  images: string[];
+  /** Flexible per-product specification key-value pairs. Defaults to {}. */
+  specifications: ProductSpecifications;
+  /** Feature bullet-point list. Defaults to []. */
+  features: string[];
+  /** Promotional badge. Defaults to 'None'. */
+  badge: ProductBadge;
+  /** Storefront visibility. 'Display' = public, 'Hide' = hidden. */
+  status: ProductStatus;
   created_at?: string;
+  updated_at?: string;
+  // ─── Joined relations (populated by Supabase select joins) ───────────────
+  category?: Pick<Category, 'id' | 'name' | 'slug' | 'image_url'>;
+  brand?: Pick<Brand, 'id' | 'name' | 'slug' | 'logo_url'>;
+}
+
+// ─── Admin Form Types ─────────────────────────────────────────────────────────
+
+/**
+ * Shape of the controlled form state in the Admin product form.
+ * All text fields are plain strings (as received from HTML inputs).
+ * JSONB fields (specs, features, images) are managed separately as React state.
+ */
+export interface ProductFormState {
+  name: string;
+  slug: string;
+  description: string;
+  category_id: string;
+  brand_id: string;
+  featured_image_url: string;
+  badge: ProductBadge;
+  status: ProductStatus;
 }
