@@ -1,7 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { verifySession } from '@/lib/session';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 
@@ -16,8 +16,9 @@ export async function getCategories() {
 
 export async function createCategory(formData: FormData) {
   try {
-    const session = await verifySession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
 
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
@@ -41,8 +42,9 @@ export async function createCategory(formData: FormData) {
 
 export async function updateCategory(id: string, formData: FormData) {
   try {
-    const session = await verifySession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
 
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
@@ -73,8 +75,9 @@ export async function updateCategory(id: string, formData: FormData) {
 
 export async function deleteCategory(id: string) {
   try {
-    const session = await verifySession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
 
     const { data: oldCategory } = await supabaseAdmin.from('categories').select('image_url').eq('id', id).single();
 

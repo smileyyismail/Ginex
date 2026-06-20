@@ -1,12 +1,13 @@
 'use server';
 
-import { verifySession } from '@/lib/session';
+import { createClient } from '@/lib/supabase/server';
 import { uploadImageFile } from '@/lib/storage';
 
 export async function uploadImage(file: File, folder: string): Promise<string> {
-  const session = await verifySession();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     throw new Error('Unauthorized');
   }
 

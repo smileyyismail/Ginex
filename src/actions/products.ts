@@ -1,7 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { verifySession } from '@/lib/session';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import type { ProductStatus, ProductBadge } from '@/lib/types';
@@ -52,8 +52,9 @@ export async function createProduct(
   features: string[],
 ) {
   try {
-    const session = await verifySession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
 
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
@@ -131,8 +132,9 @@ export async function updateProduct(
   features: string[],
 ) {
   try {
-    const session = await verifySession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
 
     const name = formData.get('name') as string;
     const slug = formData.get('slug') as string;
@@ -225,8 +227,9 @@ export async function updateProduct(
 
 export async function deleteProduct(id: string) {
   try {
-    const session = await verifySession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
 
     const { data: oldProduct } = await supabaseAdmin
       .from('products')

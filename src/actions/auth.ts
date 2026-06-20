@@ -1,7 +1,6 @@
 'use server';
 
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createSession, deleteSession } from '@/lib/session';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 export async function login(prevState: unknown, formData: FormData) {
@@ -12,25 +11,22 @@ export async function login(prevState: unknown, formData: FormData) {
     return { error: 'Email and password are required' };
   }
 
-  // Use the admin client to bypass RLS and query the admin_users table
-  const { data: user, error } = await supabaseAdmin
-    .from('admin_users')
-    .select('*')
-    .eq('email', email)
-    .eq('password', password) // Plaintext comparison as per requirements
-    .single();
+  const supabase = await createClient();
 
-  if (error || !user) {
-    return { error: 'Invalid credentials' };
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return { error: error.message };
   }
-
-  // Create encrypted session cookie
-  await createSession(user.id, user.email);
 
   redirect('/admin');
 }
 
 export async function logout() {
-  await deleteSession();
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   redirect('/login');
 }

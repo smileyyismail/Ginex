@@ -2,8 +2,16 @@ export const dynamic = 'force-dynamic';
 
 import { logout } from '@/actions/auth';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
   return (
     <div className="min-h-screen bg-background flex flex-col selection:bg-brand selection:text-black">
       <header className="bg-surface/80 backdrop-blur-xl border-b border-border-subtle h-16 flex items-center justify-between px-6 sticky top-0 z-40">
