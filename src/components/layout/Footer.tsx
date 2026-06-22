@@ -1,6 +1,27 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin } from "lucide-react";
 
+function FooterLinkColumn({ title, links }: { title: string, links: {label: string, href: string}[] }) {
+  return (
+    <div>
+      <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest font-heading flex items-center gap-2">
+        <span className="w-4 h-px" style={{ background: 'linear-gradient(90deg, #D4AF37, transparent)' }} />
+        {title}
+      </h4>
+      <ul className="space-y-3 text-sm font-light">
+        {links.map(({ label, href }) => (
+          <li key={label}>
+            <Link href={href} className="hover:text-[#D4AF37] transition-colors duration-300 inline-flex items-center gap-1.5 group">
+              <span className="w-0 h-px bg-[#D4AF37] group-hover:w-3 transition-all duration-300" />
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -74,61 +95,25 @@ export function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest font-heading flex items-center gap-2">
-              <span
-                className="w-4 h-px"
-                style={{ background: 'linear-gradient(90deg, #D4AF37, transparent)' }}
-              />
-              Quick Links
-            </h4>
-            <ul className="space-y-3 text-sm font-light">
-              {[
-                { label: 'Home', href: '/' },
-                { label: 'All Products', href: '/products' },
-                { label: 'About Us', href: '/about' },
-              ].map(({ label, href }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="hover:text-[#D4AF37] transition-colors duration-300 hover:translate-x-1 inline-flex items-center gap-1.5 group"
-                  >
-                    <span className="w-0 h-px bg-[#D4AF37] group-hover:w-3 transition-all duration-300" />
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterLinkColumn 
+            title="Quick Links"
+            links={[
+              { label: 'Home', href: '/' },
+              { label: 'All Products', href: '/products' },
+              { label: 'About Us', href: '/about' },
+            ]}
+          />
 
           {/* Customer Service */}
-          <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest font-heading flex items-center gap-2">
-              <span
-                className="w-4 h-px"
-                style={{ background: 'linear-gradient(90deg, #D4AF37, transparent)' }}
-              />
-              Customer Service
-            </h4>
-            <ul className="space-y-3 text-sm font-light">
-              {[
-                { label: 'Contact Us', href: '/about' },
-                { label: 'FAQs', href: '#' },
-                { label: 'Shipping & Returns', href: '#' },
-                { label: 'Privacy Policy', href: '#' },
-              ].map(({ label, href }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="hover:text-[#D4AF37] transition-colors duration-300 inline-flex items-center gap-1.5 group"
-                  >
-                    <span className="w-0 h-px bg-[#D4AF37] group-hover:w-3 transition-all duration-300" />
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterLinkColumn 
+            title="Customer Service"
+            links={[
+              { label: 'Contact Us', href: '/about' },
+              { label: 'FAQs', href: '#' },
+              { label: 'Shipping & Returns', href: '#' },
+              { label: 'Privacy Policy', href: '#' },
+            ]}
+          />
 
           {/* Contact Info */}
           <div>

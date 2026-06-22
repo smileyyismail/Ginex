@@ -7,6 +7,7 @@ export function useObjectUrl(file: File | null) {
 
   useEffect(() => {
     if (!file) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUrl(null);
       return;
     }
@@ -25,6 +26,7 @@ export function useObjectUrls(files: File[]) {
 
   useEffect(() => {
     const objectUrls = files.map((file) => URL.createObjectURL(file));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrls(objectUrls);
 
     return () => {

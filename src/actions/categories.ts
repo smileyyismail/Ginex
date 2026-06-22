@@ -1,26 +1,21 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createClient, verifyAdmin } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import { CategorySchema } from '@/lib/validations';
+import { withAdminAuth } from '@/lib/supabase/action-utils';
 
 export async function getCategories() {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
+  const { data, error } = await supabase.from('categories').select('*').order('name');
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function createCategory(formData: FormData) {
-  try {
-    const adminCheck = await verifyAdmin();
-    if (!adminCheck.success) return { success: false, error: adminCheck.error };
-
+  return withAdminAuth(async () => {
     const validatedFields = CategorySchema.safeParse({
       name: formData.get('name') as string,
       slug: formData.get('slug') as string,
@@ -42,16 +37,11 @@ export async function createCategory(formData: FormData) {
     
     revalidatePath('/admin');
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
-  }
+  });
 }
 
 export async function updateCategory(id: string, formData: FormData) {
-  try {
-    const adminCheck = await verifyAdmin();
-    if (!adminCheck.success) return { success: false, error: adminCheck.error };
-
+  return withAdminAuth(async () => {
     const validatedFields = CategorySchema.safeParse({
       name: formData.get('name') as string,
       slug: formData.get('slug') as string,
@@ -80,22 +70,14 @@ export async function updateCategory(id: string, formData: FormData) {
 
     revalidatePath('/admin');
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
-  }
+  });
 }
 
 export async function deleteCategory(id: string) {
-  try {
-    const adminCheck = await verifyAdmin();
-    if (!adminCheck.success) return { success: false, error: adminCheck.error };
-
+  return withAdminAuth(async () => {
     const { data: oldCategory } = await supabaseAdmin.from('categories').select('image_url').eq('id', id).single();
 
-    const { error } = await supabaseAdmin
-      .from('categories')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabaseAdmin.from('categories').delete().eq('id', id);
 
     if (error) return { success: false, error: error.message };
     
@@ -105,7 +87,5 @@ export async function deleteCategory(id: string) {
 
     revalidatePath('/admin');
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
-  }
+  });
 }

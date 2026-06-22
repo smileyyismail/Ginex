@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient, verifyAdmin } from '@/lib/supabase/server';
+import { verifyAdmin } from '@/lib/supabase/server';
 import { uploadImageFile } from '@/lib/storage';
 
 export async function uploadImage(file: File, folder: string): Promise<string> {

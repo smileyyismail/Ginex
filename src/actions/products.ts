@@ -1,11 +1,11 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createClient, verifyAdmin } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
-import type { ProductStatus, ProductBadge } from '@/lib/types';
 import { ProductSchema } from '@/lib/validations';
+import { withAdminAuth } from '@/lib/supabase/action-utils';
 
 // ─── Public Queries ───────────────────────────────────────────────────────────
 
@@ -52,10 +52,7 @@ export async function createProduct(
   specs: Record<string, string>,
   features: string[],
 ) {
-  try {
-    const adminCheck = await verifyAdmin();
-    if (!adminCheck.success) return { success: false, error: adminCheck.error };
-
+  return withAdminAuth(async () => {
     const validatedFields = ProductSchema.safeParse({
       name: formData.get('name') as string,
       slug: formData.get('slug') as string,
@@ -114,9 +111,7 @@ export async function createProduct(
     revalidatePath('/admin');
 
     return { success: true, data: product };
-  } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
-  }
+  });
 }
 
 export async function updateProduct(
@@ -126,10 +121,7 @@ export async function updateProduct(
   specs: Record<string, string>,
   features: string[],
 ) {
-  try {
-    const adminCheck = await verifyAdmin();
-    if (!adminCheck.success) return { success: false, error: adminCheck.error };
-
+  return withAdminAuth(async () => {
     const validatedFields = ProductSchema.safeParse({
       name: formData.get('name') as string,
       slug: formData.get('slug') as string,
@@ -209,16 +201,11 @@ export async function updateProduct(
     revalidatePath('/admin');
 
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
-  }
+  });
 }
 
 export async function deleteProduct(id: string) {
-  try {
-    const adminCheck = await verifyAdmin();
-    if (!adminCheck.success) return { success: false, error: adminCheck.error };
-
+  return withAdminAuth(async () => {
     const { data: oldProduct } = await supabaseAdmin
       .from('products')
       .select('slug, featured_image_url, images')
@@ -246,7 +233,5 @@ export async function deleteProduct(id: string) {
     revalidatePath('/admin');
 
     return { success: true };
-  } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
-  }
+  });
 }

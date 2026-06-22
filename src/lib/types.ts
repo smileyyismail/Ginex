@@ -1,9 +1,9 @@
 // ─── Enums / Literal Types ────────────────────────────────────────────────────
 /** Controls visibility on the public storefront. */
-export type ProductStatus = 'Display' | 'Hide';
+type ProductStatus = 'Display' | 'Hide';
 
 /** Promotional badge displayed on product cards. */
-export type ProductBadge = 'None' | 'Trending' | 'New' | 'Best Seller';
+type ProductBadge = 'None' | 'Trending' | 'New' | 'Best Seller';
 
 /**
  * Flexible specification map.
@@ -13,7 +13,7 @@ export type ProductBadge = 'None' | 'Trending' | 'New' | 'Best Seller';
  *   Charger:    { "Output": "65W", "Ports": "USB-C + USB-A" }
  *   Power Bank: { "Capacity": "10000mAh", "Battery Type": "Lithium Polymer" }
  */
-export type ProductSpecifications = Record<string, string>;
+type ProductSpecifications = Record<string, string>;
 
 // ─── Core Entities ────────────────────────────────────────────────────────────
 

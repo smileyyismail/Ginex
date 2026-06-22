@@ -6,7 +6,7 @@ const STORAGE_BUCKET = 'ginex-assets';
 const ALLOWED_FOLDERS = new Set(['products', 'categories', 'brands']);
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
-export function validateImageUpload(file: File, folder: string) {
+function validateImageUpload(file: File, folder: string) {
   if (!ALLOWED_FOLDERS.has(folder)) {
     throw new Error('Invalid upload folder');
   }
