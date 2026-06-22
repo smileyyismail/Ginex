@@ -1,7 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, verifyAdmin } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import { BrandSchema } from '@/lib/validations';
@@ -18,9 +18,8 @@ export async function getBrands() {
 
 export async function createBrand(formData: FormData) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const adminCheck = await verifyAdmin();
+    if (!adminCheck.success) return { success: false, error: adminCheck.error };
 
     const validatedFields = BrandSchema.safeParse({
       name: formData.get('name') as string,
@@ -50,9 +49,8 @@ export async function createBrand(formData: FormData) {
 
 export async function updateBrand(id: string, formData: FormData) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const adminCheck = await verifyAdmin();
+    if (!adminCheck.success) return { success: false, error: adminCheck.error };
 
     const validatedFields = BrandSchema.safeParse({
       name: formData.get('name') as string,
@@ -89,9 +87,8 @@ export async function updateBrand(id: string, formData: FormData) {
 
 export async function deleteBrand(id: string) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const adminCheck = await verifyAdmin();
+    if (!adminCheck.success) return { success: false, error: adminCheck.error };
 
     const { data: oldBrand } = await supabaseAdmin.from('brands').select('logo_url').eq('id', id).single();
 

@@ -1,7 +1,7 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, verifyAdmin } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import { CategorySchema } from '@/lib/validations';
@@ -18,9 +18,8 @@ export async function getCategories() {
 
 export async function createCategory(formData: FormData) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const adminCheck = await verifyAdmin();
+    if (!adminCheck.success) return { success: false, error: adminCheck.error };
 
     const validatedFields = CategorySchema.safeParse({
       name: formData.get('name') as string,
@@ -50,9 +49,8 @@ export async function createCategory(formData: FormData) {
 
 export async function updateCategory(id: string, formData: FormData) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const adminCheck = await verifyAdmin();
+    if (!adminCheck.success) return { success: false, error: adminCheck.error };
 
     const validatedFields = CategorySchema.safeParse({
       name: formData.get('name') as string,
@@ -89,9 +87,8 @@ export async function updateCategory(id: string, formData: FormData) {
 
 export async function deleteCategory(id: string) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'Unauthorized' };
+    const adminCheck = await verifyAdmin();
+    if (!adminCheck.success) return { success: false, error: adminCheck.error };
 
     const { data: oldCategory } = await supabaseAdmin.from('categories').select('image_url').eq('id', id).single();
 

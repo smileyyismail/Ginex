@@ -1,14 +1,12 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, verifyAdmin } from '@/lib/supabase/server';
 import { uploadImageFile } from '@/lib/storage';
 
 export async function uploadImage(file: File, folder: string): Promise<string> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error('Unauthorized');
+  const adminCheck = await verifyAdmin();
+  if (!adminCheck.success) {
+    throw new Error(adminCheck.error);
   }
 
   return uploadImageFile(file, folder);

@@ -27,3 +27,25 @@ export async function createClient() {
     }
   );
 }
+
+export async function verifyAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  
+  if (adminEmail && user.email === adminEmail) {
+    return { success: true, user };
+  }
+
+  if (user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin') {
+    return { success: true, user };
+  }
+
+  // If no admin configuration matches, deny access
+  return { success: false, error: 'Forbidden: Admin privileges required. Please set ADMIN_EMAIL in your environment variables.' };
+}
