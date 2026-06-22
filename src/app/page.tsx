@@ -13,7 +13,9 @@ import { TrustSection } from "@/components/home/TrustSection";
 
 export const revalidate = 3600;
 
-export default async function Home() {
+import { Suspense } from 'react';
+
+async function HomeContent() {
   const [activeProducts, categories] = await Promise.all([
     getPublicProducts(),
     getCategories()
@@ -23,10 +25,24 @@ export default async function Home() {
   const trending = activeProducts.filter(p => p.badge === 'Trending').slice(0, 4);
   const activeCategories = categories || [];
 
-  return (
-    <main className="min-h-screen bg-[#0A0A0A] font-sans">
-      <Navbar />
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: activeProducts.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Product',
+        name: product.name,
+        url: `https://ginex.com/products/${product.slug}`,
+        image: product.featured_image_url,
+      }
+    }))
+  };
 
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* 1 · Hero */}
       <HeroSection products={activeProducts} />
 
@@ -97,7 +113,21 @@ export default async function Home() {
 
       {/* 8 · Premium Contact CTA */}
       <ContactSection />
+    </>
+  );
+}
 
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-[#0A0A0A] font-sans">
+      <Navbar />
+      <Suspense fallback={
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full animate-spin" style={{ border: '3px solid rgba(212,175,55,0.15)', borderTopColor: '#D4AF37' }} />
+        </div>
+      }>
+        <HomeContent />
+      </Suspense>
       <Footer />
     </main>
   );

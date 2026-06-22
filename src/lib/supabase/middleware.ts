@@ -40,8 +40,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If user is authenticated and is on /login, redirect to /admin
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
+  // If user is authenticated and is exactly on /login, redirect to /admin
+  if (user && request.nextUrl.pathname === '/login') {
     const url = request.nextUrl.clone();
     url.pathname = '/admin';
     return NextResponse.redirect(url);

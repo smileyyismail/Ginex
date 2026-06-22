@@ -45,9 +45,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const orgJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Ginex',
+    url: 'https://ginex.com',
+    contactPoint: [
+      { '@type': 'ContactPoint', telephone: '+91-9392920252', contactType: 'customer service' },
+      { '@type': 'ContactPoint', telephone: '+91-9751703635', contactType: 'customer service' }
+    ]
+  };
+
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Ginex',
+    url: 'https://ginex.com',
+  };
+
   return (
     <html lang="en">
       <body className={`${inter.variable} ${montserrat.variable} font-sans antialiased`}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
         {children}
         <Toaster position="top-center" richColors />
       </body>

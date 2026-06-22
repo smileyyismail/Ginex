@@ -13,17 +13,55 @@ export const metadata = {
   description: 'Browse our complete collection of premium mobile accessories - cases, chargers, cables, and more.',
 };
 
+import { Suspense } from 'react';
+import { ProductGridSkeleton } from '@/components/common/Skeletons';
+
+async function ProductsContent({ filters }: { filters: { category?: string; brand?: string; badge?: string; q?: string } }) {
+  const [activeProducts, categories, brands] = await Promise.all([
+    getPublicProducts(),
+    getCategories(),
+    getBrands(),
+  ]);
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: activeProducts.map((product, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Product',
+        name: product.name,
+        url: `https://ginex.com/products/${product.slug}`,
+        image: product.featured_image_url,
+      }
+    }))
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div className="container mx-auto px-4 py-12">
+        <ProductListings
+          initialProducts={activeProducts}
+          categories={categories || []}
+          brands={brands || []}
+          initialCategory={filters.category}
+          initialBrand={filters.brand}
+          initialBadge={filters.badge}
+          initialSearch={filters.q}
+        />
+      </div>
+    </>
+  );
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; brand?: string; badge?: string; q?: string }>;
 }) {
   const filters = await searchParams;
-  const [activeProducts, categories, brands] = await Promise.all([
-    getPublicProducts(),
-    getCategories(),
-    getBrands(),
-  ]);
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] font-sans">
@@ -66,17 +104,9 @@ export default async function ProductsPage({
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        <ProductListings
-          initialProducts={activeProducts}
-          categories={categories || []}
-          brands={brands || []}
-          initialCategory={filters.category}
-          initialBrand={filters.brand}
-          initialBadge={filters.badge}
-          initialSearch={filters.q}
-        />
-      </div>
+      <Suspense fallback={<div className="container mx-auto px-4 py-12"><ProductGridSkeleton count={8} /></div>}>
+        <ProductsContent filters={filters} />
+      </Suspense>
 
       <Footer />
     </main>

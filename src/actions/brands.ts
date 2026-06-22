@@ -4,9 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
+import { BrandSchema } from '@/lib/validations';
 
 export async function getBrands() {
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('brands')
     .select('*')
     .order('name');
@@ -20,12 +22,18 @@ export async function createBrand(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const name = formData.get('name') as string;
-    const slug = formData.get('slug') as string;
-    const description = formData.get('description') as string;
-    const logo_url = formData.get('logo_url') as string;
+    const validatedFields = BrandSchema.safeParse({
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: (formData.get('description') as string) || '',
+      logo_url: (formData.get('logo_url') as string) || '',
+    });
 
-    if (!name || !slug) return { success: false, error: 'Name and slug are required' };
+    if (!validatedFields.success) {
+      return { success: false, error: validatedFields.error.issues[0].message };
+    }
+
+    const { name, slug, description, logo_url } = validatedFields.data;
 
     const { error } = await supabaseAdmin
       .from('brands')
@@ -46,12 +54,18 @@ export async function updateBrand(id: string, formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const name = formData.get('name') as string;
-    const slug = formData.get('slug') as string;
-    const description = formData.get('description') as string;
-    const logo_url = formData.get('logo_url') as string;
+    const validatedFields = BrandSchema.safeParse({
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: (formData.get('description') as string) || '',
+      logo_url: (formData.get('logo_url') as string) || '',
+    });
 
-    if (!name || !slug) return { success: false, error: 'Name and slug are required' };
+    if (!validatedFields.success) {
+      return { success: false, error: validatedFields.error.issues[0].message };
+    }
+
+    const { name, slug, description, logo_url } = validatedFields.data;
 
     const { data: oldBrand } = await supabaseAdmin.from('brands').select('logo_url').eq('id', id).single();
 

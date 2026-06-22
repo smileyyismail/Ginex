@@ -4,9 +4,11 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
+import { CategorySchema } from '@/lib/validations';
 
 export async function getCategories() {
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('categories')
     .select('*')
     .order('name');
@@ -20,12 +22,18 @@ export async function createCategory(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const name = formData.get('name') as string;
-    const slug = formData.get('slug') as string;
-    const description = formData.get('description') as string;
-    const image_url = formData.get('image_url') as string;
+    const validatedFields = CategorySchema.safeParse({
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: (formData.get('description') as string) || '',
+      image_url: (formData.get('image_url') as string) || '',
+    });
 
-    if (!name || !slug) return { success: false, error: 'Name and slug are required' };
+    if (!validatedFields.success) {
+      return { success: false, error: validatedFields.error.issues[0].message };
+    }
+
+    const { name, slug, description, image_url } = validatedFields.data;
 
     const { error } = await supabaseAdmin
       .from('categories')
@@ -46,12 +54,18 @@ export async function updateCategory(id: string, formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const name = formData.get('name') as string;
-    const slug = formData.get('slug') as string;
-    const description = formData.get('description') as string;
-    const image_url = formData.get('image_url') as string;
+    const validatedFields = CategorySchema.safeParse({
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: (formData.get('description') as string) || '',
+      image_url: (formData.get('image_url') as string) || '',
+    });
 
-    if (!name || !slug) return { success: false, error: 'Name and slug are required' };
+    if (!validatedFields.success) {
+      return { success: false, error: validatedFields.error.issues[0].message };
+    }
+
+    const { name, slug, description, image_url } = validatedFields.data;
 
     const { data: oldCategory } = await supabaseAdmin.from('categories').select('image_url').eq('id', id).single();
 

@@ -5,15 +5,14 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import type { ProductStatus, ProductBadge } from '@/lib/types';
-
-const VALID_STATUSES: ProductStatus[] = ['Display', 'Hide'];
-const VALID_BADGES: ProductBadge[] = ['None', 'Trending', 'New', 'Best Seller'];
+import { ProductSchema } from '@/lib/validations';
 
 // ─── Public Queries ───────────────────────────────────────────────────────────
 
 /** Fetches all products with joined category & brand name (admin list). */
 export async function getProducts() {
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('products')
     .select('*, category:categories(id, name, slug, image_url), brand:brands(id, name, slug, logo_url)')
     .order('created_at', { ascending: false });
@@ -23,7 +22,8 @@ export async function getProducts() {
 
 /** Fetches only Display-status products for the public storefront. */
 export async function getPublicProducts() {
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('products')
     .select('*, category:categories(id, name, slug, image_url), brand:brands(id, name, slug, logo_url)')
     .eq('status', 'Display')
@@ -34,7 +34,8 @@ export async function getPublicProducts() {
 
 /** Fetches a single product by slug with full category & brand data. */
 export async function getProduct(slug: string) {
-  const { data, error } = await supabaseAdmin
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .from('products')
     .select('*, category:categories(*), brand:brands(*)')
     .eq('slug', slug)
@@ -56,27 +57,22 @@ export async function createProduct(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const name = formData.get('name') as string;
-    const slug = formData.get('slug') as string;
-    const description = formData.get('description') as string;
-    const category_id = formData.get('category_id') as string;
-    const brand_id = formData.get('brand_id') as string;
-    const featured_image_url = formData.get('featured_image_url') as string;
-    const badge = (formData.get('badge') as string) || 'None';
-    const status = (formData.get('status') as string) || 'Display';
+    const validatedFields = ProductSchema.safeParse({
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: (formData.get('description') as string) || '',
+      category_id: formData.get('category_id') as string,
+      brand_id: formData.get('brand_id') as string,
+      featured_image_url: formData.get('featured_image_url') as string,
+      badge: (formData.get('badge') as string) || 'None',
+      status: (formData.get('status') as string) || 'Display',
+    });
 
-    // Required field validation
-    if (!name || !slug || !category_id || !brand_id || !featured_image_url) {
-      return { success: false, error: 'Name, slug, category, brand, and featured image are required.' };
+    if (!validatedFields.success) {
+      return { success: false, error: validatedFields.error.issues[0].message };
     }
 
-    // Enum validation
-    if (!VALID_STATUSES.includes(status as ProductStatus)) {
-      return { success: false, error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` };
-    }
-    if (!VALID_BADGES.includes(badge as ProductBadge)) {
-      return { success: false, error: `Invalid badge. Must be one of: ${VALID_BADGES.join(', ')}` };
-    }
+    const { name, slug, description, category_id, brand_id, featured_image_url, badge, status } = validatedFields.data;
 
     // Duplicate name check
     const { data: existing } = await supabaseAdmin
@@ -136,27 +132,22 @@ export async function updateProduct(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const name = formData.get('name') as string;
-    const slug = formData.get('slug') as string;
-    const description = formData.get('description') as string;
-    const category_id = formData.get('category_id') as string;
-    const brand_id = formData.get('brand_id') as string;
-    const featured_image_url = formData.get('featured_image_url') as string;
-    const badge = (formData.get('badge') as string) || 'None';
-    const status = (formData.get('status') as string) || 'Display';
+    const validatedFields = ProductSchema.safeParse({
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: (formData.get('description') as string) || '',
+      category_id: formData.get('category_id') as string,
+      brand_id: formData.get('brand_id') as string,
+      featured_image_url: formData.get('featured_image_url') as string,
+      badge: (formData.get('badge') as string) || 'None',
+      status: (formData.get('status') as string) || 'Display',
+    });
 
-    // Required field validation
-    if (!name || !slug || !category_id || !brand_id || !featured_image_url) {
-      return { success: false, error: 'Name, slug, category, brand, and featured image are required.' };
+    if (!validatedFields.success) {
+      return { success: false, error: validatedFields.error.issues[0].message };
     }
 
-    // Enum validation
-    if (!VALID_STATUSES.includes(status as ProductStatus)) {
-      return { success: false, error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` };
-    }
-    if (!VALID_BADGES.includes(badge as ProductBadge)) {
-      return { success: false, error: `Invalid badge. Must be one of: ${VALID_BADGES.join(', ')}` };
-    }
+    const { name, slug, description, category_id, brand_id, featured_image_url, badge, status } = validatedFields.data;
 
     // Duplicate name check (exclude the product being edited)
     const { data: existing } = await supabaseAdmin
