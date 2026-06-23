@@ -31,11 +31,11 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           )}
         </div>
 
-        {product.featured_image_url && product.featured_image_url !== 'null' ? (
+        {((product.images && Array.isArray(product.images) && product.images.length > 0) || (product.featured_image_url && product.featured_image_url !== 'null')) ? (
           <div className="absolute inset-0 flex items-center justify-center p-8">
             <div className="relative h-full w-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)] transition-all duration-700 ease-out group-hover:-rotate-1 group-hover:scale-110">
               <Image
-                src={product.featured_image_url}
+                src={(product.images as string[])?.[0] || product.featured_image_url}
                 alt={product.name}
                 fill
                 priority={priority}

@@ -23,7 +23,7 @@ export const ProductSchema = z.object({
   description: z.string().optional(),
   category_id: z.string().min(1, 'Category is required'),
   brand_id: z.string().min(1, 'Brand is required'),
-  featured_image_url: z.string().min(1, 'Featured image is required'),
+  featured_image_url: z.string().optional(),
   badge: z.enum(productBadges).default('None'),
   status: z.enum(productStatuses).default('Display'),
 });

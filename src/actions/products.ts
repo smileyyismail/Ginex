@@ -59,7 +59,7 @@ export async function createProduct(
       description: (formData.get('description') as string) || '',
       category_id: formData.get('category_id') as string,
       brand_id: formData.get('brand_id') as string,
-      featured_image_url: formData.get('featured_image_url') as string,
+      featured_image_url: (formData.get('featured_image_url') as string) || '',
       badge: (formData.get('badge') as string) || 'None',
       status: (formData.get('status') as string) || 'Display',
     });
@@ -68,7 +68,7 @@ export async function createProduct(
       return { success: false, error: validatedFields.error.issues[0].message };
     }
 
-    const { name, slug, description, category_id, brand_id, featured_image_url, badge, status } = validatedFields.data;
+    const { name, slug, description, category_id, brand_id, badge, status } = validatedFields.data;
 
     // Duplicate name check
     const { data: existing } = await supabaseAdmin
@@ -84,6 +84,7 @@ export async function createProduct(
     const safeSpecs = specs && typeof specs === 'object' && !Array.isArray(specs) ? specs : {};
     const safeFeatures = Array.isArray(features) ? features.filter((f) => typeof f === 'string') : [];
     const safeImages = Array.isArray(images) ? images.filter((i) => typeof i === 'string') : [];
+    const finalFeaturedUrl = safeImages.length > 0 ? safeImages[0] : 'null';
 
     const { data: product, error } = await supabaseAdmin
       .from('products')
@@ -93,7 +94,7 @@ export async function createProduct(
         description,
         category_id,
         brand_id,
-        featured_image_url,
+        featured_image_url: finalFeaturedUrl,
         images: safeImages,
         badge,
         status,
@@ -130,7 +131,7 @@ export async function updateProduct(
       description: (formData.get('description') as string) || '',
       category_id: formData.get('category_id') as string,
       brand_id: formData.get('brand_id') as string,
-      featured_image_url: formData.get('featured_image_url') as string,
+      featured_image_url: (formData.get('featured_image_url') as string) || '',
       badge: (formData.get('badge') as string) || 'None',
       status: (formData.get('status') as string) || 'Display',
     });
@@ -139,7 +140,7 @@ export async function updateProduct(
       return { success: false, error: validatedFields.error.issues[0].message };
     }
 
-    const { name, slug, description, category_id, brand_id, featured_image_url, badge, status } = validatedFields.data;
+    const { name, slug, description, category_id, brand_id, badge, status } = validatedFields.data;
 
     // Duplicate name check (exclude the product being edited)
     const { data: existing } = await supabaseAdmin
@@ -156,6 +157,7 @@ export async function updateProduct(
     const safeSpecs = specs && typeof specs === 'object' && !Array.isArray(specs) ? specs : {};
     const safeFeatures = Array.isArray(features) ? features.filter((f) => typeof f === 'string') : [];
     const safeImages = Array.isArray(images) ? images.filter((i) => typeof i === 'string') : [];
+    const finalFeaturedUrl = safeImages.length > 0 ? safeImages[0] : 'null';
 
     // Fetch old product to diff images for deletion
     const { data: oldProduct } = await supabaseAdmin
@@ -172,7 +174,7 @@ export async function updateProduct(
         description,
         category_id,
         brand_id,
-        featured_image_url,
+        featured_image_url: finalFeaturedUrl,
         images: safeImages,
         badge,
         status,
@@ -185,7 +187,7 @@ export async function updateProduct(
 
     // Clean up replaced/removed images from storage
     const urlsToDelete: string[] = [];
-    if (oldProduct && featured_image_url !== oldProduct.featured_image_url && oldProduct.featured_image_url) {
+    if (oldProduct && finalFeaturedUrl !== oldProduct.featured_image_url && oldProduct.featured_image_url && !safeImages.includes(oldProduct.featured_image_url)) {
       urlsToDelete.push(oldProduct.featured_image_url);
     }
     if (oldProduct?.images) {

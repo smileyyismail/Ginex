@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
       title: `${product.name} | Ginex`,
       description: product.description || `Buy ${product.name} at Ginex — premium mobile accessories.`,
-      openGraph: { images: [product.featured_image_url] }
+      openGraph: { images: [(product.images as string[])?.[0] || product.featured_image_url] }
     };
   } catch {
     return { title: 'Product Not Found' };
@@ -44,7 +44,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    image: product.featured_image_url,
+    image: (product.images as string[])?.[0] || product.featured_image_url,
     description: product.description,
     brand: { '@type': 'Brand', name: product.brand?.name || 'Ginex' },
   };

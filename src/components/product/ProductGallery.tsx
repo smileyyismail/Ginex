@@ -11,10 +11,9 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ productName, featuredImageUrl, images }: ProductGalleryProps) {
-  const allImages = [
-    ...(featuredImageUrl && featuredImageUrl !== 'null' ? [featuredImageUrl] : []),
-    ...(images || []),
-  ];
+  const allImages = images && images.length > 0
+    ? images
+    : (featuredImageUrl && featuredImageUrl !== 'null' ? [featuredImageUrl] : []);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);

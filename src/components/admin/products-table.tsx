@@ -14,7 +14,88 @@ import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import type { Product, Category, Brand, ProductFormState } from '@/lib/types';
-import { useObjectUrl, useObjectUrls } from './use-object-url';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+export type GalleryItem = {
+  id: string;
+  url?: string;
+  file?: File;
+  previewUrl?: string;
+};
+
+function SortableImageItem({
+  item,
+  isPrimary,
+  onRemove,
+}: {
+  item: GalleryItem;
+  isPrimary: boolean;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  const src = item.url || item.previewUrl || '';
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="relative group cursor-grab active:cursor-grabbing"
+    >
+      <Image
+        src={src}
+        alt="Gallery Image"
+        width={80}
+        height={80}
+        unoptimized={!!item.previewUrl}
+        className={`h-24 w-24 object-cover rounded-lg border bg-surface shadow-sm transition-all ${
+          isPrimary ? 'ring-2 ring-brand ring-offset-2 ring-offset-[#111111]' : ''
+        }`}
+      />
+      {isPrimary && (
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#D4AF37] to-[#F4D03F] text-black text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-sm shadow-md whitespace-nowrap z-10 pointer-events-none">
+          ★ Primary Image
+        </div>
+      )}
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow z-20"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
 
 const DEFAULT_FORM: ProductFormState = {
   name: '',
@@ -22,7 +103,6 @@ const DEFAULT_FORM: ProductFormState = {
   description: '',
   category_id: '',
   brand_id: '',
-  featured_image_url: '',
   badge: 'None',
   status: 'Display',
 };
@@ -50,11 +130,23 @@ export function ProductsTable({
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState('');
 
-  const [featuredFile, setFeaturedFile] = useState<File | null>(null);
-  const [existingGalleryImages, setExistingGalleryImages] = useState<string[]>([]);
-  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-  const featuredPreviewUrl = useObjectUrl(featuredFile);
-  const galleryPreviewUrls = useObjectUrls(galleryFiles);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setGalleryItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
 
   async function handleEditClick(id: string) {
     try {
@@ -82,7 +174,6 @@ export function ProductsTable({
         description: fullProduct.description || '',
         category_id: fullProduct.category_id || '',
         brand_id: fullProduct.brand_id || '',
-        featured_image_url: fullProduct.featured_image_url || '',
         badge: (fullProduct.badge as ProductFormState['badge']) || 'None',
         status: (fullProduct.status as ProductFormState['status']) || 'Display',
       });
@@ -94,9 +185,10 @@ export function ProductsTable({
       setFeatures(Array.isArray(fullProduct.features) ? (fullProduct.features as string[]) : []);
       setUiStatus(fullProduct.status === 'Display' ? 'Published' : 'Draft');
       setEditingId(fullProduct.id);
-      setFeaturedFile(null);
-      setExistingGalleryImages(Array.isArray(fullProduct.images) ? (fullProduct.images as string[]) : []);
-      setGalleryFiles([]);
+      
+      const imgs = Array.isArray(fullProduct.images) ? (fullProduct.images as string[]) : [];
+      setGalleryItems(imgs.map((url, i) => ({ id: `existing-${i}-${Date.now()}`, url })));
+
       setIsOpen(true);
     } catch (error) {
       toast.error((error as Error).message);
@@ -109,9 +201,7 @@ export function ProductsTable({
     setSpecs({});
     setFeatures([]);
     setEditingId(null);
-    setFeaturedFile(null);
-    setExistingGalleryImages([]);
-    setGalleryFiles([]);
+    setGalleryItems([]);
     setIsOpen(true);
   }
 
@@ -120,16 +210,15 @@ export function ProductsTable({
     setLoading(true);
 
     try {
-      // Upload featured image if a new file was selected
-      let uploadedFeaturedUrl = formData.featured_image_url;
-      if (featuredFile) {
-        uploadedFeaturedUrl = await uploadImage(featuredFile, 'products');
-      }
-
-      // Upload any new gallery files
-      const newGalleryUrls = await Promise.all(galleryFiles.map((file) => uploadImage(file, 'products')));
-      const finalGalleryImages = [...existingGalleryImages, ...newGalleryUrls];
-
+      // Upload any new gallery files in their current order
+      const finalGalleryImages = await Promise.all(
+        galleryItems.map(async (item) => {
+          if (item.url) return item.url;
+          if (item.file) return await uploadImage(item.file, 'products');
+          return '';
+        })
+      );
+      
       // Always recompute slug from name at save time
       const slugFromName = formData.name
         .toLowerCase()
@@ -142,7 +231,6 @@ export function ProductsTable({
       form.append('description', formData.description);
       form.append('category_id', formData.category_id);
       form.append('brand_id', formData.brand_id);
-      form.append('featured_image_url', uploadedFeaturedUrl);
       form.append('badge', formData.badge);
       form.append('status', uiStatus === 'Published' ? 'Display' : 'Hide');
 
@@ -207,12 +295,12 @@ export function ProductsTable({
     setFeatures(features.filter((_, i) => i !== index));
   }
 
-  function removeGalleryImage(index: number) {
-    setExistingGalleryImages(existingGalleryImages.filter((_, i) => i !== index));
-  }
-
-  function removeGalleryFile(index: number) {
-    setGalleryFiles(galleryFiles.filter((_, i) => i !== index));
+  function removeGalleryItem(id: string) {
+    setGalleryItems((prev) => {
+      const item = prev.find((i) => i.id === id);
+      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((i) => i.id !== id);
+    });
   }
 
   return (
@@ -324,7 +412,7 @@ export function ProductsTable({
                   <label htmlFor="product-status" className="text-sm font-semibold mb-1.5 block">Status</label>
                   <Select
                     value={uiStatus}
-                    onValueChange={(val) => setUiStatus(val)}
+                    onValueChange={(val) => setUiStatus(val || 'Published')}
                   >
                     <SelectTrigger id="product-status">
                       <SelectValue placeholder="Select Status" />
@@ -356,88 +444,32 @@ export function ProductsTable({
                 </div>
               </div>
 
-              {/* Row 5: Thumbnail Image */}
-              <div className="p-4 border rounded-xl bg-surface-elevated/50">
-                <label htmlFor="product-featured-image" className="text-sm font-semibold mb-1.5 block">Featured Thumbnail</label>
-                {featuredFile && featuredPreviewUrl ? (
-                  <div className="mb-3">
-                    <Image
-                      unoptimized
-                      src={featuredPreviewUrl}
-                      alt="Featured Preview"
-                      width={80}
-                      height={80}
-                      className="h-20 w-20 object-cover rounded-lg border bg-surface shadow-sm"
-                    />
-                  </div>
-                ) : formData.featured_image_url && formData.featured_image_url !== 'null' ? (
-                  <div className="mb-3">
-                    <Image
-                      src={formData.featured_image_url}
-                      alt="Featured"
-                      width={80}
-                      height={80}
-                      className="h-20 w-20 object-cover rounded-lg border bg-surface shadow-sm"
-                    />
-                  </div>
-                ) : null}
-                <Input
-                  id="product-featured-image"
-                  type="file"
-                  accept="image/*"
-                  className="bg-surface"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) setFeaturedFile(e.target.files[0]);
-                  }}
-                />
-              </div>
-
-              {/* Row 6: Gallery Images */}
+              {/* Row 5: Gallery Images */}
               <div className="p-4 border rounded-xl bg-surface-elevated/50">
                 <label htmlFor="product-gallery" className="text-sm font-semibold mb-1.5 block">Gallery Images</label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {existingGalleryImages.map((url, idx) => (
-                    <div key={url} className="relative group">
-                      <Image
-                        src={url}
-                        alt={`Gallery ${idx + 1}`}
-                        width={64}
-                        height={64}
-                        className="h-16 w-16 object-cover rounded-lg border bg-surface shadow-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeGalleryImage(idx)}
-                        aria-label={`Remove gallery image ${idx + 1}`}
-                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {galleryFiles.map((file, idx) => (
-                    <div key={`${file.name}-${idx}`} className="relative group">
-                      {galleryPreviewUrls[idx] && (
-                        <Image
-                          unoptimized
-                          src={galleryPreviewUrls[idx]}
-                          alt={`Gallery Preview ${idx + 1}`}
-                          width={64}
-                          height={64}
-                          className="h-16 w-16 object-cover rounded-lg border bg-zinc-200 shadow-sm"
-                        />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeGalleryFile(idx)}
-                        aria-label={`Remove pending gallery image ${idx + 1}`}
-                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-xs text-text-secondary mb-3">
+                  Upload images and drag them to reorder. The first image is the Primary Image.
+                </p>
+                
+                {galleryItems.length > 0 && (
+                  <div className="mb-4">
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                      <SortableContext items={galleryItems.map(i => i.id)} strategy={horizontalListSortingStrategy}>
+                        <div className="flex flex-wrap gap-3">
+                          {galleryItems.map((item, index) => (
+                            <SortableImageItem
+                              key={item.id}
+                              item={item}
+                              isPrimary={index === 0}
+                              onRemove={() => removeGalleryItem(item.id)}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                )}
+                
                 <Input
                   id="product-gallery"
                   type="file"
@@ -446,7 +478,12 @@ export function ProductsTable({
                   className="bg-surface"
                   onChange={(e) => {
                     if (e.target.files) {
-                      setGalleryFiles([...galleryFiles, ...Array.from(e.target.files)]);
+                      const newItems = Array.from(e.target.files).map((file, idx) => ({
+                        id: `new-${Date.now()}-${idx}-${file.name}`,
+                        file,
+                        previewUrl: URL.createObjectURL(file),
+                      }));
+                      setGalleryItems((prev) => [...prev, ...newItems]);
                     }
                   }}
                 />
@@ -567,9 +604,9 @@ export function ProductsTable({
               {initialData.map((prod) => (
                 <TableRow key={prod.id}>
                   <TableCell>
-                    {prod.featured_image_url && prod.featured_image_url !== 'null' ? (
+                    {(prod.images && Array.isArray(prod.images) && prod.images.length > 0) || (prod.featured_image_url && prod.featured_image_url !== 'null') ? (
                       <Image
-                        src={prod.featured_image_url}
+                        src={(prod.images as string[])?.[0] || prod.featured_image_url}
                         alt={prod.name}
                         width={40}
                         height={40}

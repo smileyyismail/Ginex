@@ -78,7 +78,6 @@ export interface ProductFormState {
   description: string;
   category_id: string;
   brand_id: string;
-  featured_image_url: string;
   badge: ProductBadge;
   status: ProductStatus;
 }

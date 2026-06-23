@@ -33,7 +33,7 @@ async function ProductsContent({ filters }: { filters: { category?: string; bran
         '@type': 'Product',
         name: product.name,
         url: `https://ginex.com/products/${product.slug}`,
-        image: product.featured_image_url,
+        image: (product.images as string[])?.[0] || product.featured_image_url,
       }
     }))
   };
