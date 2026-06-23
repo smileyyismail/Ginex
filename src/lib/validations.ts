@@ -15,7 +15,7 @@ export const BrandSchema = z.object({
 });
 
 const productStatuses = ['Display', 'Hide'] as const;
-const productBadges = ['None', 'Trending', 'New', 'Best Seller'] as const;
+const productBadges = ['None', 'Trending', 'New', 'Featured', 'Best Seller'] as const;
 
 export const ProductSchema = z.object({
   name: z.string().min(1, 'Name is required'),

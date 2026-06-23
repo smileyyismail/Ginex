@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { Product } from "@/lib/types";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -38,6 +38,7 @@ export function ProductCard({ product }: { product: Product }) {
                 src={product.featured_image_url}
                 alt={product.name}
                 fill
+                priority={priority}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-contain"
               />

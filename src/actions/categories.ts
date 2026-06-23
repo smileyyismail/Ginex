@@ -9,7 +9,7 @@ import { withAdminAuth } from '@/lib/supabase/action-utils';
 
 export async function getCategories() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from('categories').select('*').order('name');
+  const { data, error } = await supabase.from('categories').select('id, name, slug, description, image_url, created_at, updated_at').order('name');
   if (error) throw new Error(error.message);
   return data;
 }
@@ -35,6 +35,9 @@ export async function createCategory(formData: FormData) {
 
     if (error) return { success: false, error: error.message };
     
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
     return { success: true };
   });
@@ -68,6 +71,9 @@ export async function updateCategory(id: string, formData: FormData) {
       await deleteImages([oldCategory.image_url]);
     }
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
     return { success: true };
   });
@@ -85,6 +91,9 @@ export async function deleteCategory(id: string) {
       await deleteImages([oldCategory.image_url]);
     }
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
     return { success: true };
   });

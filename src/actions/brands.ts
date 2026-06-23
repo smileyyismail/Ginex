@@ -9,7 +9,7 @@ import { withAdminAuth } from '@/lib/supabase/action-utils';
 
 export async function getBrands() {
   const supabase = await createClient();
-  const { data, error } = await supabase.from('brands').select('*').order('name');
+  const { data, error } = await supabase.from('brands').select('id, name, slug, description, logo_url, created_at, updated_at').order('name');
   if (error) throw new Error(error.message);
   return data;
 }
@@ -35,6 +35,9 @@ export async function createBrand(formData: FormData) {
 
     if (error) return { success: false, error: error.message };
     
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
     return { success: true };
   });
@@ -68,6 +71,9 @@ export async function updateBrand(id: string, formData: FormData) {
       await deleteImages([oldBrand.logo_url]);
     }
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
     return { success: true };
   });
@@ -85,6 +91,9 @@ export async function deleteBrand(id: string) {
       await deleteImages([oldBrand.logo_url]);
     }
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
     return { success: true };
   });

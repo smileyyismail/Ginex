@@ -11,8 +11,8 @@ function FooterLinkColumn({ title, links }: { title: string, links: {label: stri
       <ul className="space-y-3 text-sm font-light">
         {links.map(({ label, href }) => (
           <li key={label}>
-            <Link href={href} className="hover:text-[#D4AF37] transition-colors duration-300 inline-flex items-center gap-1.5 group">
-              <span className="w-0 h-px bg-[#D4AF37] group-hover:w-3 transition-all duration-300" />
+            <Link href={href} className="hover:text-gold transition-colors duration-300 inline-flex items-center gap-1.5 group">
+              <span className="w-0 h-px bg-gold group-hover:w-3 transition-all duration-300" />
               {label}
             </Link>
           </li>
@@ -26,7 +26,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative bg-[#0A0A0A] text-[#A1A1AA] border-t border-[rgba(212,175,55,0.12)] overflow-hidden">
+    <footer className="relative bg-background text-muted-foreground border-t border-gold-subtle overflow-hidden">
 
       {/* Subtle top gold line */}
       <div
@@ -46,12 +46,12 @@ export function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-1 space-y-5">
             <Link href="/" className="inline-flex items-baseline gap-0.5 group">
-              <span className="text-2xl font-black tracking-tighter text-white font-heading group-hover:text-[#F4D03F] transition-colors duration-300">
+              <span className="text-2xl font-black tracking-tighter text-white font-heading group-hover:text-gold-hover transition-colors duration-300">
                 GINEX
               </span>
               <span
-                className="text-[#D4AF37] text-3xl font-black leading-none"
-                style={{ textShadow: '0 0 12px rgba(212,175,55,0.6)' }}
+                className="text-gold text-3xl font-black leading-none"
+                style={{ textShadow: '0 0 12px var(--color-brand-glow)' }}
               >
                 .
               </span>
@@ -86,7 +86,7 @@ export function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-9 h-9 rounded-full flex items-center justify-center border border-[rgba(212,175,55,0.15)] text-[#A1A1AA] hover:text-[#D4AF37] hover:border-[rgba(212,175,55,0.5)] hover:bg-[rgba(212,175,55,0.05)] transition-all duration-300"
+                  className="w-9 h-9 rounded-full flex items-center justify-center border border-gold-subtle text-muted-foreground hover:text-gold hover:border-[rgba(212,175,55,0.5)] hover:bg-[rgba(212,175,55,0.05)] transition-all duration-300"
                 >
                   {icon}
                 </a>
@@ -126,29 +126,29 @@ export function Footer() {
             </h4>
             <ul className="space-y-4 text-sm font-light">
               <li className="flex items-start gap-3 group">
-                <div className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.05)] group-hover:border-[rgba(212,175,55,0.5)] transition-all duration-300">
-                  <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <div className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-gold-subtle bg-[rgba(212,175,55,0.05)] group-hover:border-[rgba(212,175,55,0.5)] transition-all duration-300">
+                  <MapPin className="w-3.5 h-3.5 text-gold" />
                 </div>
                 <span className="group-hover:text-white transition-colors duration-300 leading-relaxed">
                   37-157, Near Bus Stop,<br />Jagadgiri Gutta, Hyderabad.
                 </span>
               </li>
               <li className="flex items-center gap-3 group">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.05)] group-hover:border-[rgba(212,175,55,0.5)] transition-all duration-300">
-                  <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-gold-subtle bg-[rgba(212,175,55,0.05)] group-hover:border-[rgba(212,175,55,0.5)] transition-all duration-300">
+                  <Phone className="w-3.5 h-3.5 text-gold" />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <a href="tel:+919392920252" className="hover:text-[#D4AF37] transition-colors duration-300">+91 9392920252</a>
-                  <a href="tel:+919751703635" className="hover:text-[#D4AF37] transition-colors duration-300">+91 9751703635</a>
+                  <a href="tel:+919392920252" className="hover:text-gold transition-colors duration-300">+91 9392920252</a>
+                  <a href="tel:+919751703635" className="hover:text-gold transition-colors duration-300">+91 9751703635</a>
                 </div>
               </li>
               <li className="flex items-center gap-3 group">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.05)] group-hover:border-[rgba(212,175,55,0.5)] transition-all duration-300">
-                  <Mail className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-gold-subtle bg-[rgba(212,175,55,0.05)] group-hover:border-[rgba(212,175,55,0.5)] transition-all duration-300">
+                  <Mail className="w-3.5 h-3.5 text-gold" />
                 </div>
                 <a
                   href="mailto:ginex.mobi@gmail.com"
-                  className="hover:text-[#D4AF37] transition-colors duration-300"
+                  className="hover:text-gold transition-colors duration-300"
                 >
                   ginex.mobi@gmail.com
                 </a>
@@ -159,15 +159,15 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-[rgba(212,175,55,0.1)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <p className="text-[#A1A1AA]">
+        <div className="pt-8 border-t border-gold-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+          <p className="text-muted-foreground">
             &copy; {currentYear} <span className="text-white font-semibold">Ginex</span>. All rights reserved.
           </p>
           <div className="flex items-center gap-1.5">
             {['VISA', 'MASTERCARD', 'AMEX', 'UPI'].map((method) => (
               <span
                 key={method}
-                className="px-2.5 py-1 rounded-md border border-[rgba(212,175,55,0.15)] text-[#A1A1AA] text-[9px] font-bold tracking-widest"
+                className="px-2.5 py-1 rounded-md border border-gold-subtle text-muted-foreground text-[9px] font-bold tracking-widest"
               >
                 {method}
               </span>

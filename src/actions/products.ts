@@ -100,7 +100,7 @@ export async function createProduct(
         specifications: safeSpecs,
         features: safeFeatures,
       }])
-      .select()
+      .select('id, name, slug, description, category_id, brand_id, featured_image_url, badge, status, specifications, features, images, created_at, updated_at')
       .single();
 
     if (error) return { success: false, error: error.message };
@@ -108,6 +108,8 @@ export async function createProduct(
     // Revalidate all affected public pages
     revalidatePath('/');
     revalidatePath('/products');
+    revalidatePath(`/products/${slug}`);
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
 
     return { success: true, data: product };
@@ -158,7 +160,7 @@ export async function updateProduct(
     // Fetch old product to diff images for deletion
     const { data: oldProduct } = await supabaseAdmin
       .from('products')
-      .select('featured_image_url, images')
+      .select('slug, featured_image_url, images')
       .eq('id', id)
       .single();
 
@@ -197,7 +199,11 @@ export async function updateProduct(
     // Revalidate all affected pages
     revalidatePath('/');
     revalidatePath('/products');
+    if (oldProduct && oldProduct.slug !== slug) {
+      revalidatePath(`/products/${oldProduct.slug}`);
+    }
     revalidatePath(`/products/${slug}`);
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
 
     return { success: true };
@@ -230,6 +236,10 @@ export async function deleteProduct(id: string) {
     // Revalidate all affected pages
     revalidatePath('/');
     revalidatePath('/products');
+    if (oldProduct?.slug) {
+      revalidatePath(`/products/${oldProduct.slug}`);
+    }
+    revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
 
     return { success: true };

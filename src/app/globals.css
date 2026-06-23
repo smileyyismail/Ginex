@@ -10,10 +10,18 @@
   
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
+  --color-surface-dark: #0A0A0A;
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-glow: var(--brand-glow);
   --color-border-subtle: var(--border-subtle);
+  
+  --color-gold: var(--brand);
+  --color-gold-hover: var(--brand-hover);
+  --color-gold-subtle: var(--border-subtle);
+  
+  --shadow-gold-glow: 0 0 15px var(--brand-glow);
+  --shadow-gold-glow-hover: 0 0 25px var(--brand-glow);
   
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -102,9 +110,22 @@
   --sidebar-accent-foreground: var(--text-primary);
   --sidebar-border: var(--border-subtle);
   --sidebar-ring: var(--brand);
+  /* UI Components */
 }
 
+.btn-premium {
+  @apply inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-br from-gold to-gold-hover px-8 py-4 text-sm font-black uppercase tracking-widest text-black shadow-gold-glow transition-all duration-300;
+}
+.btn-premium:hover {
+  @apply -translate-y-0.5 shadow-gold-glow-hover;
+}
 
+.card-surface {
+  @apply rounded-[2rem] border border-gold-subtle bg-surface-dark transition-all duration-500;
+}
+.card-surface:hover {
+  @apply border-[rgba(212,175,55,0.4)] shadow-[0_20px_60px_rgba(212,175,55,0.15)];
+}
 
 @layer base {
   * {
@@ -256,6 +277,11 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+/* Gold gradient background */
+.bg-gold-gradient {
+  background: linear-gradient(135deg, rgba(212,175,55,0.6), rgba(212,175,55,0.1), rgba(212,175,55,0.6));
 }
 
 /* Section pattern overlay */

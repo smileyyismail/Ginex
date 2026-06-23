@@ -12,11 +12,11 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import { useObjectUrl } from './use-object-url';
 
-interface SimpleAdminTableProps {
+interface SimpleAdminTableProps<T> {
   title: string;
   description: string;
-  data: Record<string, any>[];
-  imageField: string;
+  data: T[];
+  imageField: Extract<keyof T, string>;
   imageLabel: string;
   storageFolder: string;
   onCreate: (form: FormData) => Promise<{ success: boolean; error?: string }>;
@@ -24,7 +24,7 @@ interface SimpleAdminTableProps {
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function SimpleAdminTable({
+export function SimpleAdminTable<T extends { id: string; name: string; slug: string; description?: string | null }>({
   title,
   description,
   data,
@@ -34,7 +34,7 @@ export function SimpleAdminTable({
   onCreate,
   onUpdate,
   onDelete,
-}: SimpleAdminTableProps) {
+}: SimpleAdminTableProps<T>) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -101,12 +101,12 @@ export function SimpleAdminTable({
     setIsOpen(true);
   }
 
-  function handleEditClick(item: Record<string, any>) {
+  function handleEditClick(item: T) {
     setFormData({ 
       name: item.name, 
       slug: item.slug, 
       description: item.description || '', 
-      image_url: item[imageField] || '' 
+      image_url: (item[imageField] as string) || '' 
     });
     setEditingId(item.id);
     setFile(null);
@@ -124,15 +124,16 @@ export function SimpleAdminTable({
           <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
             Add {title}
           </DialogTrigger>
-          <DialogContent className="max-w-2xl md:max-w-2xl w-full">
+          <DialogContent className="max-w-2xl md:max-w-2xl w-full" showCloseButton={false}>
             <DialogHeader>
               <DialogTitle className="text-xl">{editingId ? `Edit ${title}` : `New ${title}`}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6 mt-4">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-semibold mb-1.5 block">Name</label>
+                  <label htmlFor="simple-name" className="text-sm font-semibold mb-1.5 block">Name</label>
                   <Input 
+                    id="simple-name"
                     name="name" 
                     value={formData.name}
                     placeholder="e.g. Name"
@@ -145,8 +146,9 @@ export function SimpleAdminTable({
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold mb-1.5 block">URL Slug</label>
+                  <label htmlFor="simple-slug" className="text-sm font-semibold mb-1.5 block">URL Slug</label>
                   <Input 
+                    id="simple-slug"
                     name="slug" 
                     value={formData.slug}
                     placeholder="e.g. slug"
@@ -157,15 +159,15 @@ export function SimpleAdminTable({
               </div>
 
               <div>
-                <label className="text-sm font-semibold mb-1.5 block">{imageLabel}</label>
+                <label htmlFor="simple-image" className="text-sm font-semibold mb-1.5 block">{imageLabel}</label>
                 <div className="flex items-center gap-6 p-4 border rounded-xl bg-surface-elevated">
                   {file && previewUrl ? (
                     <div className="h-16 w-16 flex-shrink-0 bg-surface border rounded-lg flex items-center justify-center overflow-hidden relative">
-                      <Image unoptimized src={previewUrl} alt="Preview" fill className="object-contain" />
+                      <Image unoptimized src={previewUrl} alt="Preview" fill sizes="64px" className="object-contain" />
                     </div>
                   ) : formData.image_url ? (
                     <div className="h-16 w-16 flex-shrink-0 bg-surface border rounded-lg flex items-center justify-center overflow-hidden relative">
-                      <Image src={formData.image_url} alt="Image" fill className="object-contain" />
+                      <Image src={formData.image_url} alt="Image" fill sizes="64px" className="object-contain" />
                     </div>
                   ) : (
                     <div className="h-16 w-16 flex-shrink-0 bg-surface border border-dashed rounded-lg flex items-center justify-center text-xs text-text-secondary">
@@ -174,6 +176,7 @@ export function SimpleAdminTable({
                   )}
                   <div className="flex-1">
                     <Input 
+                      id="simple-image"
                       type="file" 
                       accept="image/*"
                       className="bg-surface"
@@ -188,8 +191,9 @@ export function SimpleAdminTable({
               </div>
 
               <div>
-                <label className="text-sm font-semibold mb-1.5 block">Description</label>
+                <label htmlFor="simple-description" className="text-sm font-semibold mb-1.5 block">Description</label>
                 <Textarea 
+                  id="simple-description"
                   name="description" 
                   value={formData.description}
                   placeholder="A short description..."
@@ -198,7 +202,10 @@ export function SimpleAdminTable({
                 />
               </div>
 
-              <div className="flex justify-end pt-4 border-t">
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit" disabled={loading} className="px-8">
                   {loading ? 'Saving...' : `Save ${title}`}
                 </Button>
@@ -223,7 +230,7 @@ export function SimpleAdminTable({
               <TableRow key={item.id}>
                 <TableCell>
                   {item[imageField] ? (
-                    <Image src={item[imageField]} alt={item.name} width={32} height={32} className="h-8 w-8 object-contain" />
+                    <Image src={item[imageField] as string} alt={item.name} width={32} height={32} className="h-8 w-8 object-contain" />
                   ) : (
                     <div className="h-8 w-8 bg-surface-elevated rounded-full flex items-center justify-center text-xs text-text-secondary">N/A</div>
                   )}

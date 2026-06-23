@@ -3,7 +3,7 @@
 type ProductStatus = 'Display' | 'Hide';
 
 /** Promotional badge displayed on product cards. */
-type ProductBadge = 'None' | 'Trending' | 'New' | 'Best Seller';
+type ProductBadge = 'None' | 'Trending' | 'New' | 'Featured' | 'Best Seller';
 
 /**
  * Flexible specification map.

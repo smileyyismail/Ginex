@@ -42,6 +42,7 @@ export function ProductsTable({
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState<ProductFormState>(DEFAULT_FORM);
+  const [uiStatus, setUiStatus] = useState<string>('Published');
   const [specs, setSpecs] = useState<Record<string, string>>({});
   const [newSpecKey, setNewSpecKey] = useState('');
   const [newSpecValue, setNewSpecValue] = useState('');
@@ -91,6 +92,7 @@ export function ProductsTable({
           : {},
       );
       setFeatures(Array.isArray(fullProduct.features) ? (fullProduct.features as string[]) : []);
+      setUiStatus(fullProduct.status === 'Display' ? 'Published' : 'Draft');
       setEditingId(fullProduct.id);
       setFeaturedFile(null);
       setExistingGalleryImages(Array.isArray(fullProduct.images) ? (fullProduct.images as string[]) : []);
@@ -103,6 +105,7 @@ export function ProductsTable({
 
   function handleOpenCreate() {
     setFormData(DEFAULT_FORM);
+    setUiStatus('Published');
     setSpecs({});
     setFeatures([]);
     setEditingId(null);
@@ -141,7 +144,7 @@ export function ProductsTable({
       form.append('brand_id', formData.brand_id);
       form.append('featured_image_url', uploadedFeaturedUrl);
       form.append('badge', formData.badge);
-      form.append('status', formData.status);
+      form.append('status', uiStatus === 'Published' ? 'Display' : 'Hide');
 
       if (editingId) {
         const res = await updateProduct(editingId, form, finalGalleryImages, specs, features);
@@ -192,10 +195,12 @@ export function ProductsTable({
   }
 
   function addFeature() {
-    if (newFeature.trim()) {
-      setFeatures([...features, newFeature.trim()]);
-      setNewFeature('');
+    const trimmed = newFeature.trim();
+    if (!trimmed) return;
+    if (!features.includes(trimmed)) {
+      setFeatures([...features, trimmed]);
     }
+    setNewFeature('');
   }
 
   function removeFeature(index: number) {
@@ -232,8 +237,9 @@ export function ProductsTable({
 
               {/* Row 1: Product Name (slug auto-generated) */}
               <div>
-                <label className="text-sm font-semibold mb-1.5 block">Product Name</label>
+                <label htmlFor="product-name" className="text-sm font-semibold mb-1.5 block">Product Name</label>
                 <Input
+                  id="product-name"
                   name="name"
                   value={formData.name}
                   onChange={(e) => {
@@ -253,24 +259,30 @@ export function ProductsTable({
 
               {/* Row 2: Description */}
               <div>
-                <label className="text-sm font-semibold mb-1.5 block">Description</label>
-                <Textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="h-28"
-                />
+                <label htmlFor="product-description" className="text-sm font-semibold mb-1.5 block">Description</label>
+                <div className="relative">
+                  <Textarea
+                    id="product-description"
+                    name="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className={`h-28 pb-8 ${formData.description.length >= 200 ? 'border-red-500 focus-visible:ring-red-500/20' : formData.description.length >= 170 ? 'border-brand focus-visible:ring-brand/20' : ''}`}
+                  />
+                  <div className={`absolute bottom-2 right-3 text-xs font-medium ${formData.description.length >= 200 ? 'text-red-500' : formData.description.length >= 170 ? 'text-brand' : 'text-text-secondary'}`}>
+                    {formData.description.length} / 200
+                  </div>
+                </div>
               </div>
 
               {/* Row 3: Category, Brand */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-semibold mb-1.5 block">Category</label>
+                  <label htmlFor="product-category" className="text-sm font-semibold mb-1.5 block">Category</label>
                   <Select
                     value={formData.category_id}
                     onValueChange={(val) => setFormData({ ...formData, category_id: val ?? '' })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="product-category">
                       <SelectValue placeholder="Select Category">
                         {formData.category_id
                           ? categories.find((c) => c.id === formData.category_id)?.name
@@ -285,12 +297,12 @@ export function ProductsTable({
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold mb-1.5 block">Brand</label>
+                  <label htmlFor="product-brand" className="text-sm font-semibold mb-1.5 block">Brand</label>
                   <Select
                     value={formData.brand_id}
                     onValueChange={(val) => setFormData({ ...formData, brand_id: val ?? '' })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="product-brand">
                       <SelectValue placeholder="Select Brand">
                         {formData.brand_id
                           ? brands.find((b) => b.id === formData.brand_id)?.name
@@ -307,35 +319,37 @@ export function ProductsTable({
               </div>
 
               {/* Row 4: Status, Badge */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                 <div>
-                  <label className="text-sm font-semibold mb-1.5 block">Status</label>
+                  <label htmlFor="product-status" className="text-sm font-semibold mb-1.5 block">Status</label>
                   <Select
-                    value={formData.status}
-                    onValueChange={(val) => setFormData({ ...formData, status: val as ProductFormState['status'] })}
+                    value={uiStatus}
+                    onValueChange={(val) => setUiStatus(val)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="product-status">
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Display">Display</SelectItem>
-                      <SelectItem value="Hide">Hide</SelectItem>
+                      <SelectItem value="Published">Published</SelectItem>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold mb-1.5 block">Product Badge</label>
+                  <label htmlFor="product-badge" className="text-sm font-semibold mb-1.5 block">Badge</label>
                   <Select
                     value={formData.badge}
                     onValueChange={(val) => setFormData({ ...formData, badge: val as ProductFormState['badge'] })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="product-badge">
                       <SelectValue placeholder="Select Badge" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="None">None</SelectItem>
-                      <SelectItem value="Trending">Trending</SelectItem>
                       <SelectItem value="New">New</SelectItem>
+                      <SelectItem value="Trending">Trending</SelectItem>
+                      <SelectItem value="Featured">Featured</SelectItem>
                       <SelectItem value="Best Seller">Best Seller</SelectItem>
                     </SelectContent>
                   </Select>
@@ -344,7 +358,7 @@ export function ProductsTable({
 
               {/* Row 5: Thumbnail Image */}
               <div className="p-4 border rounded-xl bg-surface-elevated/50">
-                <label className="text-sm font-semibold mb-1.5 block">Featured Thumbnail</label>
+                <label htmlFor="product-featured-image" className="text-sm font-semibold mb-1.5 block">Featured Thumbnail</label>
                 {featuredFile && featuredPreviewUrl ? (
                   <div className="mb-3">
                     <Image
@@ -368,6 +382,7 @@ export function ProductsTable({
                   </div>
                 ) : null}
                 <Input
+                  id="product-featured-image"
                   type="file"
                   accept="image/*"
                   className="bg-surface"
@@ -379,7 +394,7 @@ export function ProductsTable({
 
               {/* Row 6: Gallery Images */}
               <div className="p-4 border rounded-xl bg-surface-elevated/50">
-                <label className="text-sm font-semibold mb-1.5 block">Gallery Images</label>
+                <label htmlFor="product-gallery" className="text-sm font-semibold mb-1.5 block">Gallery Images</label>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {existingGalleryImages.map((url, idx) => (
                     <div key={url} className="relative group">
@@ -424,6 +439,7 @@ export function ProductsTable({
                   ))}
                 </div>
                 <Input
+                  id="product-gallery"
                   type="file"
                   accept="image/*"
                   multiple
@@ -487,32 +503,43 @@ export function ProductsTable({
                     placeholder="e.g. 35W PD Fast Charging"
                     value={newFeature}
                     onChange={(e) => setNewFeature(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addFeature();
+                      }
+                    }}
                   />
-                  <Button type="button" onClick={addFeature} variant="secondary">Add</Button>
+                  <Button type="button" onClick={addFeature} variant="secondary">
+                    Add
+                  </Button>
                 </div>
-                <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
                   {features.map((feature, idx) => (
                     <div
                       key={`feature-${idx}-${feature.slice(0, 10)}`}
-                      className="flex justify-between items-center bg-surface-elevated p-2 rounded-md border"
+                      className="flex items-center gap-1.5 bg-surface-elevated border border-brand/30 hover:border-brand text-text-primary px-3 py-1.5 rounded-full text-sm transition-colors group"
                     >
-                      <span className="text-sm truncate pr-4">{feature}</span>
+                      <span>{feature}</span>
                       <button
                         type="button"
                         aria-label={`Remove feature ${idx + 1}`}
-                        className="text-red-500 hover:text-red-700 p-1 flex-shrink-0"
+                        className="text-text-secondary group-hover:text-brand transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-full p-0.5"
                         onClick={() => removeFeature(idx)}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end pt-6 mt-6 border-t">
-                <Button type="submit" disabled={loading} className="px-8 py-6 text-lg">
+              {/* Sticky Footer */}
+              <div className="sticky bottom-0 -mx-6 -mb-6 mt-8 px-6 py-4 border-t bg-surface/90 backdrop-blur-md flex flex-col-reverse sm:flex-row justify-end gap-3 z-20 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)]">
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="w-full sm:w-auto">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-brand text-brand-foreground hover:bg-brand/90">
                   {loading ? 'Saving Product...' : 'Save Product'}
                 </Button>
               </div>
