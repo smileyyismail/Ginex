@@ -1,18 +1,20 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, verifyAdmin } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
-import { ProductSchema } from '@/lib/validations';
-import { withAdminAuth } from '@/lib/supabase/action-utils';
+import { ProductSchema, isManagedGinexAssetUrl } from '@/lib/validations';
+import { getSafeMutationError, withAdminAuth } from '@/lib/supabase/action-utils';
 
 // ─── Public Queries ───────────────────────────────────────────────────────────
 
 /** Fetches all products with joined category & brand name (admin list). */
 export async function getProducts() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const adminCheck = await verifyAdmin();
+  if (!adminCheck.success) throw new Error('Unauthorized');
+
+  const { data, error } = await supabaseAdmin
     .from('products')
     .select('*, category:categories(id, name, slug, image_url), brand:brands(id, name, slug, logo_url)')
     .order('created_at', { ascending: false });
@@ -41,6 +43,19 @@ export async function getProduct(slug: string) {
     .eq('slug', slug)
     .single();
   if (error && error.code !== 'PGRST116') throw new Error(error.message);
+  return data;
+}
+
+export async function getProductForAdmin(slug: string) {
+  const adminCheck = await verifyAdmin();
+  if (!adminCheck.success) throw new Error('Unauthorized');
+
+  const { data, error } = await supabaseAdmin
+    .from('products')
+    .select('*, category:categories(*), brand:brands(*)')
+    .eq('slug', slug)
+    .single();
+  if (error && error.code !== 'PGRST116') throw new Error('Unable to load product');
   return data;
 }
 
@@ -83,8 +98,15 @@ export async function createProduct(
     // JSONB safety guards
     const safeSpecs = specs && typeof specs === 'object' && !Array.isArray(specs) ? specs : {};
     const safeFeatures = Array.isArray(features) ? features.filter((f) => typeof f === 'string') : [];
-    const safeImages = Array.isArray(images) ? images.filter((i) => typeof i === 'string') : [];
-    const finalFeaturedUrl = safeImages.length > 0 ? safeImages[0] : 'null';
+    const safeImages = Array.isArray(images)
+      ? images.filter((i) => typeof i === 'string' && isManagedGinexAssetUrl(i))
+      : [];
+
+    if (safeImages.length === 0) {
+      return { success: false, error: 'At least one product image is required' };
+    }
+
+    const finalFeaturedUrl = safeImages[0];
 
     const { data: product, error } = await supabaseAdmin
       .from('products')
@@ -104,7 +126,7 @@ export async function createProduct(
       .select('id, name, slug, description, category_id, brand_id, featured_image_url, badge, status, specifications, features, images, created_at, updated_at')
       .single();
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to create product') };
 
     // Revalidate all affected public pages
     revalidatePath('/');
@@ -156,8 +178,15 @@ export async function updateProduct(
     // JSONB safety guards
     const safeSpecs = specs && typeof specs === 'object' && !Array.isArray(specs) ? specs : {};
     const safeFeatures = Array.isArray(features) ? features.filter((f) => typeof f === 'string') : [];
-    const safeImages = Array.isArray(images) ? images.filter((i) => typeof i === 'string') : [];
-    const finalFeaturedUrl = safeImages.length > 0 ? safeImages[0] : 'null';
+    const safeImages = Array.isArray(images)
+      ? images.filter((i) => typeof i === 'string' && isManagedGinexAssetUrl(i))
+      : [];
+
+    if (safeImages.length === 0) {
+      return { success: false, error: 'At least one product image is required' };
+    }
+
+    const finalFeaturedUrl = safeImages[0];
 
     // Fetch old product to diff images for deletion
     const { data: oldProduct } = await supabaseAdmin
@@ -183,7 +212,7 @@ export async function updateProduct(
       })
       .eq('id', id);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to update product') };
 
     // Clean up replaced/removed images from storage
     const urlsToDelete: string[] = [];
@@ -225,7 +254,7 @@ export async function deleteProduct(id: string) {
       .delete()
       .eq('id', id);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to delete product') };
 
     // Clean up all images from storage
     const urlsToDelete: string[] = [];

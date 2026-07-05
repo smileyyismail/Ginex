@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createProduct, updateProduct, deleteProduct, getProduct } from '@/actions/products';
+import { createProduct, updateProduct, deleteProduct, getProductForAdmin } from '@/actions/products';
 import { uploadImage } from '@/actions/storage';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
@@ -97,6 +97,12 @@ function SortableImageItem({
   );
 }
 
+function revokeGalleryPreviewUrls(items: GalleryItem[]) {
+  items.forEach((item) => {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  });
+}
+
 const DEFAULT_FORM: ProductFormState = {
   name: '',
   slug: '',
@@ -156,7 +162,7 @@ export function ProductsTable({
         return;
       }
 
-      const fullProduct = await getProduct(productRow.slug);
+      const fullProduct = await getProductForAdmin(productRow.slug);
       if (!fullProduct) {
         toast.error('Product not found');
         return;
@@ -196,6 +202,7 @@ export function ProductsTable({
   }
 
   function handleOpenCreate() {
+    revokeGalleryPreviewUrls(galleryItems);
     setFormData(DEFAULT_FORM);
     setUiStatus('Published');
     setSpecs({});
@@ -244,6 +251,8 @@ export function ProductsTable({
         toast.success('Product created');
       }
 
+      revokeGalleryPreviewUrls(galleryItems);
+      setGalleryItems([]);
       setIsOpen(false);
       router.refresh();
     } catch (err) {
@@ -311,7 +320,13 @@ export function ProductsTable({
           <p className="text-text-secondary text-sm mt-1">Manage your product catalog and inventory.</p>
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog
+          open={isOpen}
+          onOpenChange={(open) => {
+            if (!open) revokeGalleryPreviewUrls(galleryItems);
+            setIsOpen(open);
+          }}
+        >
           <DialogTrigger render={<Button onClick={handleOpenCreate} />}>
             Add Product
           </DialogTrigger>
@@ -420,7 +435,6 @@ export function ProductsTable({
                     <SelectContent>
                       <SelectItem value="Published">Published</SelectItem>
                       <SelectItem value="Draft">Draft</SelectItem>
-                      <SelectItem value="Archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

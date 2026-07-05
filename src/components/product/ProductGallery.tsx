@@ -102,7 +102,7 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-300 hover:scale-110 z-20"
               style={{
                 background: 'rgba(0,0,0,0.7)',
                 backdropFilter: 'blur(10px)',
@@ -115,7 +115,7 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-300 hover:scale-110 z-20"
               style={{
                 background: 'rgba(0,0,0,0.7)',
                 backdropFilter: 'blur(10px)',

@@ -32,16 +32,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If the user is unauthenticated and the route starts with /admin, redirect them to /login.
-  if (!user && request.nextUrl.pathname.startsWith('/admin')) {
-    // Prevent redirect loop if somehow we are in admin and not authenticated
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  const isLoginRoute = request.nextUrl.pathname === '/login';
+  const isAdmin = Boolean(user);
+
+  if (isAdminRoute && !isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // If user is authenticated and is exactly on /login, redirect to /admin
-  if (user && request.nextUrl.pathname === '/login') {
+  if (isLoginRoute && isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin';
     return NextResponse.redirect(url);

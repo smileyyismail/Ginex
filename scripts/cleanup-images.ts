@@ -50,7 +50,7 @@ async function main() {
       if (parts.length > 1) {
         usedPaths.add(parts[1]);
       }
-    } catch (e) {
+    } catch {
       // ignore parsing errors
     }
   };

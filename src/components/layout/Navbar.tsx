@@ -74,15 +74,13 @@ export function Navbar() {
         </div>
 
         <div className="z-50 hidden items-center gap-4 md:flex">
-          <a
-            href="https://wa.me/919392920252"
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href="/#contact"
             className="btn-premium px-5 py-2.5 text-xs"
           >
             <Phone className="h-3.5 w-3.5" />
             <span>Contact Us</span>
-          </a>
+          </Link>
         </div>
 
         <button
@@ -136,15 +134,14 @@ export function Navbar() {
             })}
 
             <div className="mt-auto pt-10">
-              <a
-                href="https://wa.me/919392920252"
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                href="/#contact"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="btn-premium w-full text-base px-6 py-4"
               >
                 <Phone className="h-5 w-5" />
-                <span>Contact Us on WhatsApp</span>
-              </a>
+                <span>Contact Us</span>
+              </Link>
             </div>
           </div>
         </div>

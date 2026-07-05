@@ -9,4 +9,9 @@ if (!supabaseUrl) throw new Error("NEXT_PUBLIC_SUPABASE_URL is missing");
 if (!supabaseServiceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing");
 
 // Admin client for CRUD operations. Bypasses RLS. NEVER expose to the client.
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});

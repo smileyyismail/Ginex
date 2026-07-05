@@ -7,6 +7,11 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const message =
+    process.env.NODE_ENV === 'development'
+      ? error.message
+      : 'An unexpected error occurred. Please try again.';
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] px-4">
       {/* Glow */}
@@ -42,7 +47,7 @@ export default function Error({
           Something went wrong
         </h2>
         <p className="text-[#A1A1AA] mb-8 font-light text-sm leading-relaxed">
-          {error.message || "An unexpected error occurred. Please try again."}
+          {message}
         </p>
 
         <button

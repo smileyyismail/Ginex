@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -6,8 +6,22 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"], variable: '--font-sans' });
 const montserrat = Montserrat({ subsets: ["latin"], variable: '--font-heading', weight: ['400', '500', '600', '700', '800', '900'] });
 
+export const viewport: Viewport = {
+  themeColor: '#0A0A0A',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://ginex.com'),
+  applicationName: 'Ginex',
+  generator: 'Next.js',
+  creator: 'Ginex Team',
+  publisher: 'Ginex',
+  alternates: {
+    canonical: '/',
+  },
   title: {
     template: '%s | Ginex Mobile Accessories',
     default: 'Ginex | Premium Mobile Accessories & Chargers',
@@ -37,7 +51,15 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
-  }
+  },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    title: 'Ginex',
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({

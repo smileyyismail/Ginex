@@ -36,6 +36,5 @@ export async function verifyAdmin() {
     return { success: false, error: 'Unauthorized' };
   }
 
-  // As per your configuration, any authenticated user is granted admin privileges.
   return { success: true, user };
 }

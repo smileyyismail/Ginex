@@ -23,24 +23,50 @@ async function ProductsContent({ filters }: { filters: { category?: string; bran
     getBrands(),
   ]);
 
-  const jsonLd = {
+  const collectionJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: activeProducts.map((product, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      item: {
-        '@type': 'Product',
-        name: product.name,
-        url: `https://ginex.com/products/${product.slug}`,
-        image: (product.images as string[])?.[0] || product.featured_image_url,
+    '@type': 'CollectionPage',
+    name: 'All Products | Ginex',
+    description: 'Browse our complete collection of premium mobile accessories - cases, chargers, cables, and more.',
+    url: 'https://ginex.com/products',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: activeProducts.map((product, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Product',
+          name: product.name,
+          url: `https://ginex.com/products/${product.slug}`,
+          image: (product.images as string[])?.[0] || product.featured_image_url,
+        }
+      }))
+    }
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://ginex.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Products',
+        item: 'https://ginex.com/products'
       }
-    }))
+    ]
   };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <div className="container mx-auto px-4 py-12">
         <ProductListings
           initialProducts={activeProducts}

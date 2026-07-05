@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import { CategorySchema } from '@/lib/validations';
-import { withAdminAuth } from '@/lib/supabase/action-utils';
+import { getSafeMutationError, withAdminAuth } from '@/lib/supabase/action-utils';
 
 export async function getCategories() {
   const supabase = await createClient();
@@ -33,7 +33,7 @@ export async function createCategory(formData: FormData) {
       .from('categories')
       .insert([{ name, slug, description, image_url }]);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to create category') };
     
     revalidatePath('/');
     revalidatePath('/products');
@@ -65,7 +65,7 @@ export async function updateCategory(id: string, formData: FormData) {
       .update({ name, slug, description, image_url })
       .eq('id', id);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to update category') };
     
     if (oldCategory?.image_url && oldCategory.image_url !== image_url) {
       await deleteImages([oldCategory.image_url]);
@@ -85,7 +85,7 @@ export async function deleteCategory(id: string) {
 
     const { error } = await supabaseAdmin.from('categories').delete().eq('id', id);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to delete category') };
     
     if (oldCategory?.image_url) {
       await deleteImages([oldCategory.image_url]);

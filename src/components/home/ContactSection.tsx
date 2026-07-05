@@ -27,7 +27,7 @@ const contactCards = [
 
 export function ContactSection() {
   return (
-    <section className="relative overflow-hidden bg-[#0A0A0A] py-36">
+    <section id="contact" className="relative overflow-hidden bg-[#0A0A0A] py-36">
       <div
         className="pointer-events-none absolute inset-0"
         style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(212,175,55,0.07) 0%, transparent 60%)' }}

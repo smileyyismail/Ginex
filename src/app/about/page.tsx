@@ -6,6 +6,12 @@ import { Shield, Target, CheckCircle } from "lucide-react";
 export const metadata = {
   title: 'About Us',
   description: 'Learn more about Ginex, our mission, vision, and why you should choose our premium mobile accessories.',
+  openGraph: {
+    title: 'About Ginex',
+    description: 'Learn more about Ginex, our mission, vision, and why you should choose our premium mobile accessories.',
+    url: 'https://ginex.com/about',
+    type: 'profile',
+  },
 };
 
 const whyChoose = [
@@ -27,8 +33,17 @@ const whyChoose = [
 ];
 
 export default function AboutPage() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: 'About Ginex',
+    description: 'Learn more about Ginex, our mission, vision, and why you should choose our premium mobile accessories.',
+    url: 'https://ginex.com/about',
+  };
+
   return (
     <main className="min-h-screen bg-[#0A0A0A] font-sans flex flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar />
 
       {/* Page Header */}
@@ -165,8 +180,8 @@ export default function AboutPage() {
                 <p className="text-[#A1A1AA] font-light mb-8 max-w-md mx-auto text-sm">
                   Have questions or want to discuss a bulk order? Reach out to us directly.
                 </p>
-                <GoldCTAButton href="https://wa.me/919392920252" icon="whatsapp">
-                  Contact on WhatsApp
+                <GoldCTAButton href="/#contact" icon="phone">
+                  Contact Us
                 </GoldCTAButton>
               </div>
             </section>

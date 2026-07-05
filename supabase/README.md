@@ -21,4 +21,4 @@ Admin setup:
 2. Sign in at `/login`.
 3. Use `/admin` to create brands, categories, and products.
 
-Current app behavior treats authenticated users as catalog admins. If multiple auth users will exist, add role-based authorization before inviting non-admin accounts.
+There is only one application role: admin. Any authenticated Supabase user is treated as the admin user. Admin mutations use the service-role key on the server, so every admin-facing Server Action verifies the user has a valid authenticated session before performing a write.

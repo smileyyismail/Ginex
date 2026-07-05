@@ -7,6 +7,16 @@ export async function withAdminAuth<T>(action: () => Promise<{ success: boolean;
     
     return await action();
   } catch (err) {
-    return { success: false, error: (err as Error).message || 'Server error' };
+    console.error('Admin action failed:', err);
+    return { success: false, error: 'Server error' };
   }
+}
+
+export function getSafeMutationError(error: { code?: string; message?: string }, fallback = 'Unable to save changes') {
+  if (error.code === '23505') return 'A record with this slug or name already exists';
+  if (error.code === '23503') return 'Selected category or brand no longer exists';
+  if (error.code === '23514') return 'Submitted data failed validation';
+
+  console.error('Database mutation failed:', error.message || error);
+  return fallback;
 }

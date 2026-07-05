@@ -18,10 +18,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   try {
     const product = await getProduct(slug);
     if (!product || product.status !== 'Display') return { title: 'Product Not Found' };
+    const imageUrl = (product.images as string[])?.[0] || product.featured_image_url;
     return {
       title: `${product.name} | Ginex`,
       description: product.description || `Buy ${product.name} at Ginex — premium mobile accessories.`,
-      openGraph: { images: [(product.images as string[])?.[0] || product.featured_image_url] }
+      alternates: {
+        canonical: `/products/${product.slug}`,
+      },
+      openGraph: {
+        title: `${product.name} | Ginex`,
+        description: product.description || `Buy ${product.name} at Ginex — premium mobile accessories.`,
+        url: `https://ginex.com/products/${product.slug}`,
+        images: imageUrl ? [{ url: imageUrl }] : [],
+        type: 'website',
+      }
     };
   } catch {
     return { title: 'Product Not Found' };
@@ -47,6 +57,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     image: (product.images as string[])?.[0] || product.featured_image_url,
     description: product.description,
     brand: { '@type': 'Brand', name: product.brand?.name || 'Ginex' },
+    sku: product.id || product.slug,
+    offers: {
+      '@type': 'Offer',
+      url: `https://ginex.com/products/${product.slug}`,
+      priceCurrency: 'INR',
+      price: '0', // B2B inquiry
+      availability: 'https://schema.org/InStock',
+    }
   };
 
   return (

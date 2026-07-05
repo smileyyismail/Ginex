@@ -1,14 +1,25 @@
+'use client';
+
+import { useState } from 'react';
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@/lib/types";
 
 export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const images = product.images && Array.isArray(product.images) && product.images.length > 0 
+    ? product.images as string[]
+    : (product.featured_image_url && product.featured_image_url !== 'null' ? [product.featured_image_url] : []);
+
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-[rgba(212,175,55,0.1)] bg-[#111111] transition-all duration-500 hover:-translate-y-2 hover:scale-[1.01] hover:border-[rgba(212,175,55,0.45)] hover:shadow-[0_30px_70px_rgba(212,175,55,0.18),0_0_0_1px_rgba(212,175,55,0.1)]"
-    >
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-[rgba(212,175,55,0.1)] bg-[#111111] transition-all duration-500 hover:-translate-y-2 hover:scale-[1.01] hover:border-[rgba(212,175,55,0.45)] hover:shadow-[0_30px_70px_rgba(212,175,55,0.18),0_0_0_1px_rgba(212,175,55,0.1)]">
+      <Link
+        href={`/products/${product.slug}`}
+        className="absolute inset-0 z-10 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
+        aria-label={`View details for ${product.name}`}
+      />
       <div className="pointer-events-none absolute left-0 top-0 z-10 h-px w-full bg-gradient-to-r from-transparent via-[rgba(212,175,55,0.6)] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
       <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-[#0D0D0D] to-[#111111]">
@@ -31,11 +42,11 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           )}
         </div>
 
-        {((product.images && Array.isArray(product.images) && product.images.length > 0) || (product.featured_image_url && product.featured_image_url !== 'null')) ? (
-          <div className="absolute inset-0 flex items-center justify-center p-8">
-            <div className="relative h-full w-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)] transition-all duration-700 ease-out group-hover:-rotate-1 group-hover:scale-110">
+        {images.length > 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center p-3">
+            <div className="relative h-full w-full drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)] transition-all duration-700 ease-out group-hover:scale-105">
               <Image
-                src={(product.images as string[])?.[0] || product.featured_image_url}
+                src={images[currentImageIndex]}
                 alt={product.name}
                 fill
                 priority={priority}
@@ -43,6 +54,42 @@ export function ProductCard({ product, priority = false }: { product: Product; p
                 className="object-contain"
               />
             </div>
+
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+                  }}
+                  className="absolute left-2 top-1/2 z-30 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-100 backdrop-blur transition-all duration-300 hover:bg-black/70 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+                  }}
+                  className="absolute right-2 top-1/2 z-30 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white opacity-100 backdrop-blur transition-all duration-300 hover:bg-black/70 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                
+                <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 opacity-100 transition-opacity duration-300 sm:opacity-0 sm:group-hover:opacity-100">
+                  {images.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`h-1.5 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'w-4 bg-[#D4AF37]' : 'w-1.5 bg-white/40'}`} 
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -86,6 +133,6 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           </div>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

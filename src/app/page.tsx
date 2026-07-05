@@ -9,7 +9,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { ContactSection } from "@/components/home/ContactSection";
 import { BrandTrustBar } from "@/components/home/BrandTrustBar";
 import { BrandStorySection } from "@/components/home/BrandStorySection";
-import { TrustSection } from "@/components/home/TrustSection";
+import { FaqSection } from "@/components/home/FaqSection";
 
 export const revalidate = 3600;
 
@@ -22,7 +22,6 @@ async function HomeContent() {
   ]);
 
   const bestSellers = activeProducts.filter(p => p.badge === 'Best Seller').slice(0, 4);
-  const trending = activeProducts.filter(p => p.badge === 'Trending').slice(0, 4);
   const activeCategories = categories || [];
 
   const jsonLd = {
@@ -64,35 +63,7 @@ async function HomeContent() {
         </section>
       )}
 
-      {/* 4 · Brand Story / Philosophy */}
-      <BrandStorySection />
-
-      {/* 5 · Trending Now */}
-      {trending.length > 0 && (
-        <section
-          className="py-28 relative overflow-hidden"
-          style={{ background: '#111111', borderTop: '1px solid rgba(212,175,55,0.08)', borderBottom: '1px solid rgba(212,175,55,0.08)' }}
-        >
-          <div
-            className="absolute top-0 left-0 w-full h-[300px] pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at top center, rgba(212,175,55,0.07) 0%, transparent 70%)' }}
-          />
-          <div className="container mx-auto px-4 relative z-10">
-            <SectionHeader
-              title="Trending Now"
-              subtitle="The accessories everyone's talking about."
-              actionLabel="View All Trending"
-              actionUrl="/products?badge=trending"
-            />
-            <ProductGrid products={trending} />
-          </div>
-        </section>
-      )}
-
-      {/* 6 · The Ginex Promise (Trust pillars) */}
-      <TrustSection />
-
-      {/* 7 · Shop by Category */}
+      {/* 4 · Shop by Category */}
       <section
         className="py-28 relative overflow-hidden"
         style={{ background: '#111111', borderTop: '1px solid rgba(212,175,55,0.08)' }}
@@ -111,7 +82,13 @@ async function HomeContent() {
         </div>
       </section>
 
-      {/* 8 · Premium Contact CTA */}
+      {/* 5 · Brand Story / Philosophy */}
+      <BrandStorySection />
+
+      {/* 6 · FAQ Section */}
+      <FaqSection />
+
+      {/* 7 · Premium Contact CTA */}
       <ContactSection />
     </>
   );

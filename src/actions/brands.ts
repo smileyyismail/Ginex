@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import { BrandSchema } from '@/lib/validations';
-import { withAdminAuth } from '@/lib/supabase/action-utils';
+import { getSafeMutationError, withAdminAuth } from '@/lib/supabase/action-utils';
 
 export async function getBrands() {
   const supabase = await createClient();
@@ -33,7 +33,7 @@ export async function createBrand(formData: FormData) {
       .from('brands')
       .insert([{ name, slug, description, logo_url }]);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to create brand') };
     
     revalidatePath('/');
     revalidatePath('/products');
@@ -65,7 +65,7 @@ export async function updateBrand(id: string, formData: FormData) {
       .update({ name, slug, description, logo_url })
       .eq('id', id);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to update brand') };
     
     if (oldBrand?.logo_url && oldBrand.logo_url !== logo_url) {
       await deleteImages([oldBrand.logo_url]);
@@ -85,7 +85,7 @@ export async function deleteBrand(id: string) {
 
     const { error } = await supabaseAdmin.from('brands').delete().eq('id', id);
 
-    if (error) return { success: false, error: error.message };
+    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to delete brand') };
     
     if (oldBrand?.logo_url) {
       await deleteImages([oldBrand.logo_url]);

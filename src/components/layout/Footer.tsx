@@ -108,10 +108,8 @@ export function Footer() {
           <FooterLinkColumn 
             title="Customer Service"
             links={[
-              { label: 'Contact Us', href: '/about' },
-              { label: 'FAQs', href: '#' },
-              { label: 'Shipping & Returns', href: '#' },
-              { label: 'Privacy Policy', href: '#' },
+              { label: 'Contact Us', href: '/#contact' },
+              { label: 'FAQs', href: '/#faq' },
             ]}
           />
 
@@ -163,16 +161,6 @@ export function Footer() {
           <p className="text-muted-foreground">
             &copy; {currentYear} <span className="text-white font-semibold">Ginex</span>. All rights reserved.
           </p>
-          <div className="flex items-center gap-1.5">
-            {['VISA', 'MASTERCARD', 'AMEX', 'UPI'].map((method) => (
-              <span
-                key={method}
-                className="px-2.5 py-1 rounded-md border border-gold-subtle text-muted-foreground text-[9px] font-bold tracking-widest"
-              >
-                {method}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
     </footer>
