@@ -161,6 +161,12 @@ export function Footer() {
           <p className="text-muted-foreground">
             &copy; {currentYear} <span className="text-white font-semibold">Ginex</span>. All rights reserved.
           </p>
+          <Link
+            href="/admin"
+            className="px-4 py-1.5 rounded-md flex items-center justify-center border border-gold-subtle text-muted-foreground hover:text-gold hover:border-[rgba(212,175,55,0.5)] hover:bg-[rgba(212,175,55,0.05)] transition-all duration-300"
+          >
+            Admin Panel
+          </Link>
         </div>
       </div>
     </footer>
