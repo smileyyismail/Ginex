@@ -2,13 +2,14 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { Category, Product } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import type { Category, Product } from '@/lib/types';
 import { ProductGrid } from './ProductGrid';
 
 interface ProductListingsProps {
   initialProducts: Product[];
   categories: Category[];
-    initialCategory?: string;
+  initialCategory?: string;
   initialBrand?: string;
   initialBadge?: string;
   initialSearch?: string;
@@ -18,12 +19,12 @@ interface FilterContentProps {
   idPrefix: string;
   search: string;
   selectedCategory: string | null;
-    selectedBadge: string | null;
+  selectedBadge: string | null;
   categories: Category[];
-    badgeOptions: string[];
+  badgeOptions: string[];
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: string | null) => void;
-    onBadgeChange: (value: string | null) => void;
+  onBadgeChange: (value: string | null) => void;
 }
 
 function normalizeQueryValue(value?: string | null) {
@@ -35,12 +36,12 @@ function normalizeQueryValue(value?: string | null) {
 }
 
 function filterButtonClass(isActive: boolean) {
-  return [
+  return cn(
     'block w-full rounded-lg px-3 py-2 text-left text-sm transition-all duration-200',
     isActive
       ? 'bg-[rgba(212,175,55,0.08)] font-bold text-[#D4AF37]'
       : 'text-[#A1A1AA] hover:bg-[rgba(212,175,55,0.05)] hover:text-white',
-  ].join(' ');
+  );
 }
 
 function FilterContent({
@@ -49,10 +50,9 @@ function FilterContent({
   selectedCategory,
   selectedBadge,
   categories,
-    badgeOptions,
+  badgeOptions,
   onSearchChange,
   onCategoryChange,
-  
   onBadgeChange,
 }: FilterContentProps) {
   const searchId = `${idPrefix}-search`;
@@ -63,7 +63,7 @@ function FilterContent({
         <label htmlFor={searchId} className="sr-only">
           Search products
         </label>
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AF37]" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D4AF37]" aria-hidden="true" />
         <input
           id={searchId}
           type="search"
@@ -95,8 +95,6 @@ function FilterContent({
           </button>
         ))}
       </FilterGroup>
-
-      
 
       {badgeOptions.length > 0 && (
         <FilterGroup title="Highlights">
@@ -139,16 +137,17 @@ function FilterGroup({ title, children }: { title: string; children: ReactNode }
 export function ProductListings({
   initialProducts,
   categories,
-    initialCategory,
-  initialBrand,
+  initialCategory,
+  // initialBrand is accepted but not used in the current filter model
   initialBadge,
   initialSearch = '',
 }: ProductListingsProps) {
   const initialCategoryId =
     categories.find((category) => category.slug === initialCategory || category.id === initialCategory)?.id ?? null;
+
   const [search, setSearch] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategoryId);
-    const [selectedBadge, setSelectedBadge] = useState<string | null>(
+  const [selectedBadge, setSelectedBadge] = useState<string | null>(
     initialBadge ? normalizeQueryValue(initialBadge) : null
   );
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -175,7 +174,6 @@ export function ProductListings({
             .some((value) => value!.toLowerCase().includes(normalizedSearch))
         : true;
       const matchCategory = selectedCategory ? product.category_id === selectedCategory : true;
-      
       const matchBadge = selectedBadge ? normalizeQueryValue(product.badge) === selectedBadge : true;
 
       return matchSearch && matchCategory && matchBadge;
@@ -187,7 +185,7 @@ export function ProductListings({
     selectedCategory,
     selectedBadge,
     categories,
-        badgeOptions,
+    badgeOptions,
     onSearchChange: setSearch,
     onCategoryChange: setSelectedCategory,
     onBadgeChange: setSelectedBadge,
@@ -201,9 +199,10 @@ export function ProductListings({
           onClick={() => setIsMobileFilterOpen((isOpen) => !isOpen)}
           aria-expanded={isMobileFilterOpen}
           aria-controls="mobile-product-filters"
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[rgba(212,175,55,0.25)] px-4 py-2.5 text-sm font-bold uppercase tracking-widest text-[#D4AF37] transition-all duration-300"
+          aria-label={isMobileFilterOpen ? 'Hide product filters' : 'Show product filters'}
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[rgba(212,175,55,0.25)] px-4 py-2.5 text-sm font-bold uppercase tracking-widest text-[#D4AF37] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           {isMobileFilterOpen ? 'Hide Filters' : 'Show Filters'}
         </button>
         {isMobileFilterOpen && (

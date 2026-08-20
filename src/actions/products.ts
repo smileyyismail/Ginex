@@ -6,11 +6,12 @@ import { revalidatePath } from 'next/cache';
 import { deleteImages } from '@/lib/storage';
 import { ProductSchema, isManagedGinexAssetUrl } from '@/lib/validations';
 import { getSafeMutationError, withAdminAuth } from '@/lib/supabase/action-utils';
+import type { Product } from '@/lib/types';
 
 // ─── Public Queries ───────────────────────────────────────────────────────────
 
-/** Fetches all products with joined category & brand name (admin list). */
-export async function getProducts() {
+/** Fetches all products with joined category (admin list). */
+export async function getProducts(): Promise<Product[]> {
   const adminCheck = await verifyAdmin();
   if (!adminCheck.success) throw new Error('Unauthorized');
 
@@ -19,11 +20,11 @@ export async function getProducts() {
     .select('*, category:categories(id, name, slug, image_url)')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
-  return data;
+  return (data ?? []) as Product[];
 }
 
 /** Fetches only Display-status products for the public storefront. */
-export async function getPublicProducts() {
+export async function getPublicProducts(): Promise<Product[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
@@ -31,11 +32,11 @@ export async function getPublicProducts() {
     .eq('status', 'Display')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
-  return data;
+  return (data ?? []) as Product[];
 }
 
-/** Fetches a single product by slug with full category & brand data. */
-export async function getProduct(slug: string) {
+/** Fetches a single product by slug with full category data. */
+export async function getProduct(slug: string): Promise<Product | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
@@ -43,10 +44,10 @@ export async function getProduct(slug: string) {
     .eq('slug', slug)
     .single();
   if (error && error.code !== 'PGRST116') throw new Error(error.message);
-  return data;
+  return data as Product | null;
 }
 
-export async function getProductForAdmin(slug: string) {
+export async function getProductForAdmin(slug: string): Promise<Product | null> {
   const adminCheck = await verifyAdmin();
   if (!adminCheck.success) throw new Error('Unauthorized');
 
@@ -56,7 +57,7 @@ export async function getProductForAdmin(slug: string) {
     .eq('slug', slug)
     .single();
   if (error && error.code !== 'PGRST116') throw new Error('Unable to load product');
-  return data;
+  return data as Product | null;
 }
 
 // ─── Admin CRUD ───────────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ export async function createProduct(
     });
 
     if (!validatedFields.success) {
-      return { success: false, error: validatedFields.error.issues[0].message };
+      return { success: false as const, error: validatedFields.error.issues[0].message };
     }
 
     const { name, slug, description, category_id, badge, status } = validatedFields.data;
@@ -91,18 +92,18 @@ export async function createProduct(
       .ilike('name', name.trim())
       .maybeSingle();
     if (existing) {
-      return { success: false, error: `A product named "${name.trim()}" already exists. Please use a different name.` };
+      return { success: false as const, error: `A product named "${name.trim()}" already exists. Please use a different name.` };
     }
 
     // JSONB safety guards
     const safeSpecs = specs && typeof specs === 'object' && !Array.isArray(specs) ? specs : {};
     const safeFeatures = Array.isArray(features) ? features.filter((f) => typeof f === 'string') : [];
     const safeImages = Array.isArray(images)
-      ? images.filter((i) => typeof i === 'string' && isManagedGinexAssetUrl(i))
+      ? images.filter((i) => typeof i === 'string' && i.length > 0 && isManagedGinexAssetUrl(i))
       : [];
 
     if (safeImages.length === 0) {
-      return { success: false, error: 'At least one product image is required' };
+      return { success: false as const, error: 'At least one product image is required' };
     }
 
     const finalFeaturedUrl = safeImages[0];
@@ -124,7 +125,7 @@ export async function createProduct(
       .select('id, name, slug, description, category_id, featured_image_url, badge, status, specifications, features, images, created_at, updated_at')
       .single();
 
-    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to create product') };
+    if (error) return { success: false as const, error: getSafeMutationError(error, 'Unable to create product') };
 
     // Revalidate all affected public pages
     revalidatePath('/');
@@ -133,7 +134,7 @@ export async function createProduct(
     revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
 
-    return { success: true, data: product };
+    return { success: true as const, data: product };
   });
 }
 
@@ -156,7 +157,7 @@ export async function updateProduct(
     });
 
     if (!validatedFields.success) {
-      return { success: false, error: validatedFields.error.issues[0].message };
+      return { success: false as const, error: validatedFields.error.issues[0].message };
     }
 
     const { name, slug, description, category_id, badge, status } = validatedFields.data;
@@ -169,18 +170,18 @@ export async function updateProduct(
       .neq('id', id)
       .maybeSingle();
     if (existing) {
-      return { success: false, error: `A product named "${name.trim()}" already exists. Please use a different name.` };
+      return { success: false as const, error: `A product named "${name.trim()}" already exists. Please use a different name.` };
     }
 
     // JSONB safety guards
     const safeSpecs = specs && typeof specs === 'object' && !Array.isArray(specs) ? specs : {};
     const safeFeatures = Array.isArray(features) ? features.filter((f) => typeof f === 'string') : [];
     const safeImages = Array.isArray(images)
-      ? images.filter((i) => typeof i === 'string' && isManagedGinexAssetUrl(i))
+      ? images.filter((i) => typeof i === 'string' && i.length > 0 && isManagedGinexAssetUrl(i))
       : [];
 
     if (safeImages.length === 0) {
-      return { success: false, error: 'At least one product image is required' };
+      return { success: false as const, error: 'At least one product image is required' };
     }
 
     const finalFeaturedUrl = safeImages[0];
@@ -208,7 +209,7 @@ export async function updateProduct(
       })
       .eq('id', id);
 
-    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to update product') };
+    if (error) return { success: false as const, error: getSafeMutationError(error, 'Unable to update product') };
 
     // Clean up replaced/removed images from storage
     const urlsToDelete: string[] = [];
@@ -233,7 +234,7 @@ export async function updateProduct(
     revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
 
-    return { success: true };
+    return { success: true as const };
   });
 }
 
@@ -250,7 +251,7 @@ export async function deleteProduct(id: string) {
       .delete()
       .eq('id', id);
 
-    if (error) return { success: false, error: getSafeMutationError(error, 'Unable to delete product') };
+    if (error) return { success: false as const, error: getSafeMutationError(error, 'Unable to delete product') };
 
     // Clean up all images from storage
     const urlsToDelete: string[] = [];
@@ -269,6 +270,6 @@ export async function deleteProduct(id: string) {
     revalidatePath('/sitemap.xml');
     revalidatePath('/admin');
 
-    return { success: true };
+    return { success: true as const };
   });
 }

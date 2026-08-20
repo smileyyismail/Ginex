@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductGalleryProps {
@@ -11,19 +11,38 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ productName, featuredImageUrl, images }: ProductGalleryProps) {
-  const allImages = images && images.length > 0
-    ? images
-    : (featuredImageUrl && featuredImageUrl !== 'null' ? [featuredImageUrl] : []);
+  const allImages =
+    images && images.length > 0
+      ? images
+      : featuredImageUrl && featuredImageUrl !== 'null'
+      ? [featuredImageUrl]
+      : [];
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // Keep a ref to the pending transition timer so we can cancel it on rapid clicks
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Clean up any pending timer on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimer.current !== undefined) {
+        clearTimeout(transitionTimer.current);
+      }
+    };
+  }, []);
 
   const handleSelect = (idx: number) => {
     if (idx === selectedIndex) return;
+    // Cancel any in-flight transition before starting a new one
+    if (transitionTimer.current !== undefined) {
+      clearTimeout(transitionTimer.current);
+    }
     setIsTransitioning(true);
-    setTimeout(() => {
+    transitionTimer.current = setTimeout(() => {
       setSelectedIndex(idx);
       setIsTransitioning(false);
+      transitionTimer.current = undefined;
     }, 200);
   };
 
@@ -60,6 +79,7 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(circle at 50% 50%, rgba(212,175,55,0.05) 0%, transparent 60%)' }}
+          aria-hidden="true"
         />
 
         {/* Decorative corners */}
@@ -73,6 +93,7 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
             key={i}
             className={`absolute w-5 h-5 pointer-events-none opacity-25 group-hover:opacity-60 transition-opacity duration-500 ${pos}`}
             style={{ borderColor: '#D4AF37' }}
+            aria-hidden="true"
           />
         ))}
 
@@ -85,44 +106,48 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
             transition: 'opacity 0.25s ease, transform 0.25s ease',
           }}
         >
-          <Image
-            key={selectedImage}
-            src={selectedImage}
-            alt={productName}
-            fill
-            priority={selectedIndex === 0}
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-contain"
-            style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.8))' }}
-          />
+          {selectedImage && (
+            <Image
+              key={selectedImage}
+              src={selectedImage}
+              alt={productName}
+              fill
+              priority={selectedIndex === 0}
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain"
+              style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.8))' }}
+            />
+          )}
         </div>
 
         {/* Navigation arrows — only when multiple images */}
         {allImages.length > 1 && (
           <>
             <button
+              type="button"
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] transition-all duration-300 hover:scale-110 z-20"
               style={{
                 background: 'rgba(0,0,0,0.7)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(212,175,55,0.25)',
                 color: '#D4AF37',
               }}
-              aria-label="Previous image"
+              aria-label={`Previous image (${selectedIndex === 0 ? allImages.length : selectedIndex} of ${allImages.length})`}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-300 hover:scale-110 z-20"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] transition-all duration-300 hover:scale-110 z-20"
               style={{
                 background: 'rgba(0,0,0,0.7)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(212,175,55,0.25)',
                 color: '#D4AF37',
               }}
-              aria-label="Next image"
+              aria-label={`Next image (${selectedIndex === allImages.length - 1 ? 1 : selectedIndex + 2} of ${allImages.length})`}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -136,6 +161,8 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
                 border: '1px solid rgba(212,175,55,0.2)',
                 color: '#D4AF37',
               }}
+              aria-live="polite"
+              aria-label={`Image ${selectedIndex + 1} of ${allImages.length}`}
             >
               {selectedIndex + 1} / {allImages.length}
             </div>
@@ -145,12 +172,21 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
 
       {/* Thumbnail Strip */}
       {allImages.length > 1 && (
-        <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        <div
+          className="flex gap-2.5 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: 'none' }}
+          role="tablist"
+          aria-label="Product image thumbnails"
+        >
           {allImages.map((url, idx) => (
             <button
               key={idx}
+              type="button"
+              role="tab"
+              aria-selected={idx === selectedIndex}
+              aria-label={`View image ${idx + 1}`}
               onClick={() => handleSelect(idx)}
-              className="relative flex-shrink-0 transition-all duration-350"
+              className="relative flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] rounded-[14px]"
               style={{
                 width: '72px',
                 height: '72px',
@@ -165,8 +201,8 @@ export function ProductGallery({ productName, featuredImageUrl, images }: Produc
                   : 'none',
                 opacity: idx === selectedIndex ? 1 : 0.55,
                 transform: idx === selectedIndex ? 'scale(1.08)' : 'scale(1)',
+                transition: 'all 0.25s ease',
               }}
-              aria-label={`View image ${idx + 1}`}
             >
               <Image
                 src={url}

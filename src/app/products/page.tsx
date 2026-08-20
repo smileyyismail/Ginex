@@ -1,25 +1,27 @@
+import { Suspense } from 'react';
+import type { Metadata } from 'next';
+
 import Link from "next/link";
 import { getCategories } from "@/actions/categories";
 import { getPublicProducts } from "@/actions/products";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { ProductListings } from "@/components/product/ProductListings";
+import { ProductGridSkeleton } from '@/components/common/Skeletons';
+import type { Product } from '@/lib/types';
 
 export const revalidate = 3600;
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'All Products',
   description: 'Browse our complete collection of premium mobile accessories - cases, chargers, cables, and more.',
 };
-
-import { Suspense } from 'react';
-import { ProductGridSkeleton } from '@/components/common/Skeletons';
 
 async function ProductsContent({ filters }: { filters: { category?: string; brand?: string; badge?: string; q?: string } }) {
   const [activeProducts, categories] = await Promise.all([
     getPublicProducts(),
     getCategories(),
-    ]);
+  ]);
 
   const collectionJsonLd = {
     '@context': 'https://schema.org',
@@ -29,14 +31,14 @@ async function ProductsContent({ filters }: { filters: { category?: string; bran
     url: 'https://ginex.com/products',
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: activeProducts.map((product: any, index: number) => ({
+      itemListElement: activeProducts.map((product: Product, index: number) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
           '@type': 'Product',
           name: product.name,
           url: `https://ginex.com/products/${product.slug}`,
-          image: (product.images as string[])?.[0] || product.featured_image_url,
+          image: product.images[0] ?? product.featured_image_url,
         }
       }))
     }
@@ -68,10 +70,9 @@ async function ProductsContent({ filters }: { filters: { category?: string; bran
       <div className="container mx-auto px-4 py-12">
         <ProductListings
           initialProducts={activeProducts}
-          categories={categories || []}
-          
+          categories={categories ?? []}
           initialCategory={filters.category}
-                    initialBadge={filters.badge}
+          initialBadge={filters.badge}
           initialSearch={filters.q}
         />
       </div>

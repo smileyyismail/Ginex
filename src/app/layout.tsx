@@ -52,7 +52,7 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  manifest: '/manifest.json',
+  // manifest: '/manifest.json' — removed: file does not exist in /public, causes 404 on every page load
   appleWebApp: {
     title: 'Ginex',
     statusBarStyle: 'black-translucent',

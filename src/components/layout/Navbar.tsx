@@ -22,6 +22,23 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open to prevent disorienting background scroll
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-500 ${
@@ -43,6 +60,7 @@ export function Navbar() {
           <span
             className="text-3xl font-black leading-none text-gold"
             style={{ textShadow: '0 0 12px var(--color-brand-glow)' }}
+            aria-hidden="true"
           >
             .
           </span>
@@ -66,6 +84,7 @@ export function Navbar() {
                 {isActive && (
                   <span
                     className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-gold-gradient shadow-gold-glow"
+                    aria-hidden="true"
                   />
                 )}
               </Link>
@@ -78,17 +97,18 @@ export function Navbar() {
             href="/#contact"
             className="btn-premium px-5 py-2.5 text-xs"
           >
-            <Phone className="h-3.5 w-3.5" />
+            <Phone className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Contact Us</span>
           </Link>
         </div>
 
         <button
           type="button"
-          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-navigation"
-          className="z-50 flex h-11 w-11 items-center justify-center rounded-full border border-gold-subtle text-muted-foreground transition-all duration-300 hover:border-[rgba(212,175,55,0.5)] hover:text-gold md:hidden"
+          aria-haspopup="true"
+          className="z-50 flex h-11 w-11 items-center justify-center rounded-full border border-gold-subtle text-muted-foreground transition-all duration-300 hover:border-[rgba(212,175,55,0.5)] hover:text-gold md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
           onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
         >
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -98,11 +118,15 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div
           id="mobile-navigation"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
           className="fixed inset-0 top-20 z-40 flex flex-col transition-all duration-500 md:hidden"
           style={{ background: 'rgba(10,10,10,0.98)', backdropFilter: 'blur(24px)' }}
         >
           <div
             className="h-px w-full bg-gold-gradient"
+            aria-hidden="true"
           />
 
           <div className="flex flex-1 flex-col space-y-1 p-8">
@@ -128,6 +152,7 @@ export function Navbar() {
                     className={`h-5 w-5 text-gold transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100 ${
                       isActive ? 'opacity-100' : 'opacity-0'
                     }`}
+                    aria-hidden="true"
                   />
                 </Link>
               );
@@ -139,7 +164,7 @@ export function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="btn-premium w-full text-base px-6 py-4"
               >
-                <Phone className="h-5 w-5" />
+                <Phone className="h-5 w-5" aria-hidden="true" />
                 <span>Contact Us</span>
               </Link>
             </div>

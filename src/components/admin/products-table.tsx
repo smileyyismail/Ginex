@@ -2,6 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
+import Image from 'next/image';
+import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
+
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,27 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createProduct, updateProduct, deleteProduct, getProductForAdmin } from '@/actions/products';
 import { uploadImage } from '@/actions/storage';
-import imageCompression from 'browser-image-compression';
-
-async function compressImage(file: File) {
-  try {
-    const compressedBlob = await imageCompression(file, {
-      maxSizeMB: 0.8,
-      maxWidthOrHeight: 1600,
-      useWebWorker: true,
-      fileType: 'image/webp'
-    });
-    return new File([compressedBlob], file.name, { type: 'image/webp' });
-  } catch (error) {
-    console.error("Compression error:", error);
-    return file;
-  }
-}
-
-import { toast } from 'sonner';
-import { X } from 'lucide-react';
-import Image from 'next/image';
-import type { Product, Category, ProductFormState } from '@/lib/types';
+import type { Product, Category, ProductFormState, ProductStatus } from '@/lib/types';
 import {
   DndContext,
   closestCenter,
@@ -48,6 +33,25 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
+// ─── Image compression ────────────────────────────────────────────────────────
+
+async function compressImage(file: File): Promise<File> {
+  try {
+    const compressedBlob = await imageCompression(file, {
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1600,
+      useWebWorker: true,
+      fileType: 'image/webp'
+    });
+    return new File([compressedBlob], file.name, { type: 'image/webp' });
+  } catch (error) {
+    console.error('Compression error:', error);
+    return file;
+  }
+}
+
+// ─── Gallery item types ───────────────────────────────────────────────────────
 
 export type GalleryItem = {
   id: string;
@@ -74,7 +78,7 @@ function SortableImageItem({
     zIndex: isDragging ? 10 : 1,
   };
 
-  const src = item.url || item.previewUrl || '';
+  const src = item.url ?? item.previewUrl ?? '';
 
   return (
     <div
@@ -86,7 +90,7 @@ function SortableImageItem({
     >
       <Image
         src={src}
-        alt="Gallery Image"
+        alt="Gallery image"
         width={80}
         height={80}
         unoptimized={!!item.previewUrl}
@@ -106,7 +110,8 @@ function SortableImageItem({
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow z-20"
+        aria-label="Remove image"
+        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
       >
         <X className="w-3.5 h-3.5" />
       </button>
@@ -120,31 +125,34 @@ function revokeGalleryPreviewUrls(items: GalleryItem[]) {
   });
 }
 
+// ─── Default form state ───────────────────────────────────────────────────────
+
 const DEFAULT_FORM: ProductFormState = {
   name: '',
   slug: '',
   description: '',
   category_id: '',
-  
   badge: 'None',
   status: 'Display',
 };
 
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export function ProductsTable({
   initialData,
   categories,
-  }: {
+}: {
   initialData: Product[];
   categories: Category[];
-  
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Inline delete confirmation: holds the id of the product pending deletion
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ProductFormState>(DEFAULT_FORM);
-  const [uiStatus, setUiStatus] = useState<string>('Published');
   const [specs, setSpecs] = useState<Record<string, string>>({});
   const [newSpecKey, setNewSpecKey] = useState('');
   const [newSpecValue, setNewSpecValue] = useState('');
@@ -193,23 +201,22 @@ export function ProductsTable({
       setFormData({
         name: fullProduct.name,
         slug: derivedSlug,
-        description: fullProduct.description || '',
-        category_id: fullProduct.category_id || '',
-        
-        badge: (fullProduct.badge as ProductFormState['badge']) || 'None',
-        status: (fullProduct.status as ProductFormState['status']) || 'Display',
+        description: fullProduct.description ?? '',
+        category_id: fullProduct.category_id ?? '',
+        badge: fullProduct.badge ?? 'None',
+        status: fullProduct.status ?? 'Display',
       });
       setSpecs(
         fullProduct.specifications && typeof fullProduct.specifications === 'object'
           ? (fullProduct.specifications as Record<string, string>)
           : {},
       );
-      setFeatures(Array.isArray(fullProduct.features) ? (fullProduct.features as string[]) : []);
-      setUiStatus(fullProduct.status === 'Display' ? 'Published' : 'Draft');
+      setFeatures(Array.isArray(fullProduct.features) ? fullProduct.features : []);
       setEditingId(fullProduct.id);
-      
-      const imgs = Array.isArray(fullProduct.images) ? (fullProduct.images as string[]) : [];
-      setGalleryItems(imgs.map((url, i) => ({ id: `existing-${i}-${Date.now()}`, url })));
+
+      // Use crypto.randomUUID() to guarantee collision-free IDs
+      const imgs = Array.isArray(fullProduct.images) ? fullProduct.images : [];
+      setGalleryItems(imgs.map((url) => ({ id: crypto.randomUUID(), url })));
 
       setIsOpen(true);
     } catch (error) {
@@ -220,7 +227,6 @@ export function ProductsTable({
   function handleOpenCreate() {
     revokeGalleryPreviewUrls(galleryItems);
     setFormData(DEFAULT_FORM);
-    setUiStatus('Published');
     setSpecs({});
     setFeatures([]);
     setEditingId(null);
@@ -234,17 +240,20 @@ export function ProductsTable({
 
     try {
       // Upload any new gallery files in their current order
-      const finalGalleryImages = await Promise.all(
+      const resolvedImages = await Promise.all(
         galleryItems.map(async (item) => {
           if (item.url) return item.url;
           if (item.file) {
-              const compressed = await compressImage(item.file);
-              return await uploadImage(compressed, 'products');
-            }
-          return '';
+            const compressed = await compressImage(item.file);
+            return await uploadImage(compressed, 'products');
+          }
+          return null;
         })
       );
-      
+
+      // Filter out any null/empty results — items with neither url nor file are dropped
+      const finalGalleryImages = resolvedImages.filter((url): url is string => typeof url === 'string' && url.length > 0);
+
       // Always recompute slug from name at save time
       const slugFromName = formData.name
         .toLowerCase()
@@ -256,9 +265,9 @@ export function ProductsTable({
       form.append('slug', slugFromName);
       form.append('description', formData.description);
       form.append('category_id', formData.category_id);
-      
       form.append('badge', formData.badge);
-      form.append('status', uiStatus === 'Published' ? 'Display' : 'Hide');
+      // Map ProductStatus directly to the server action's expected value
+      form.append('status', formData.status);
 
       if (editingId) {
         const res = await updateProduct(editingId, form, finalGalleryImages, specs, features);
@@ -281,18 +290,18 @@ export function ProductsTable({
     }
   }
 
-  async function handleDelete(id: string) {
-    if (confirm('Are you sure you want to delete this product?')) {
-      try {
-        const res = await deleteProduct(id);
-        if (res?.error) toast.error(res.error);
-        else {
-          toast.success('Product deleted');
-          router.refresh();
-        }
-      } catch (err) {
-        toast.error((err as Error).message || 'An error occurred');
+  async function handleDeleteConfirmed(id: string) {
+    try {
+      const res = await deleteProduct(id);
+      if (res?.error) toast.error(res.error);
+      else {
+        toast.success('Product deleted');
+        router.refresh();
       }
+    } catch (err) {
+      toast.error((err as Error).message || 'An error occurred');
+    } finally {
+      setConfirmDeleteId(null);
     }
   }
 
@@ -333,6 +342,43 @@ export function ProductsTable({
 
   return (
     <div>
+      {/* ─── Inline delete confirmation dialog ─────────────────────────────── */}
+      {confirmDeleteId !== null && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-confirm-title"
+          aria-describedby="delete-confirm-desc"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        >
+          <div className="bg-surface border border-border-subtle rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
+            <h2 id="delete-confirm-title" className="text-lg font-bold text-text-primary mb-2">
+              Delete Product?
+            </h2>
+            <p id="delete-confirm-desc" className="text-sm text-text-secondary mb-6">
+              This will permanently delete the product and remove all its images from storage. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmDeleteId(null)}
+                autoFocus
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleDeleteConfirmed(confirmDeleteId)}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-text-primary">Products</h2>
@@ -418,7 +464,6 @@ export function ProductsTable({
                     </SelectContent>
                   </Select>
                 </div>
-                
               </div>
 
               {/* Row 4: Status, Badge */}
@@ -426,15 +471,15 @@ export function ProductsTable({
                 <div>
                   <label htmlFor="product-status" className="text-sm font-semibold mb-1.5 block">Status</label>
                   <Select
-                    value={uiStatus}
-                    onValueChange={(val) => setUiStatus(val || 'Published')}
+                    value={formData.status}
+                    onValueChange={(val) => setFormData({ ...formData, status: (val as ProductStatus) || 'Display' })}
                   >
                     <SelectTrigger id="product-status">
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Published">Published</SelectItem>
-                      <SelectItem value="Draft">Draft</SelectItem>
+                      <SelectItem value="Display">Published</SelectItem>
+                      <SelectItem value="Hide">Draft</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -464,7 +509,7 @@ export function ProductsTable({
                 <p className="text-xs text-text-secondary mb-3">
                   Upload images and drag them to reorder. The first image is the Primary Image.
                 </p>
-                
+
                 {galleryItems.length > 0 && (
                   <div className="mb-4">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -483,7 +528,7 @@ export function ProductsTable({
                     </DndContext>
                   </div>
                 )}
-                
+
                 <Input
                   id="product-gallery"
                   type="file"
@@ -492,8 +537,8 @@ export function ProductsTable({
                   className="bg-surface"
                   onChange={(e) => {
                     if (e.target.files) {
-                      const newItems = Array.from(e.target.files).map((file, idx) => ({
-                        id: `new-${Date.now()}-${idx}-${file.name}`,
+                      const newItems = Array.from(e.target.files).map((file) => ({
+                        id: crypto.randomUUID(),
                         file,
                         previewUrl: URL.createObjectURL(file),
                       }));
@@ -574,7 +619,7 @@ export function ProductsTable({
                       <span>{feature}</span>
                       <button
                         type="button"
-                        aria-label={`Remove feature ${idx + 1}`}
+                        aria-label={`Remove feature: ${feature}`}
                         className="text-text-secondary group-hover:text-brand transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-full p-0.5"
                         onClick={() => removeFeature(idx)}
                       >
@@ -608,7 +653,6 @@ export function ProductsTable({
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
-                
                 <TableHead>Badge</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -618,9 +662,9 @@ export function ProductsTable({
               {initialData.map((prod) => (
                 <TableRow key={prod.id}>
                   <TableCell>
-                    {(prod.images && Array.isArray(prod.images) && prod.images.length > 0) || (prod.featured_image_url && prod.featured_image_url !== 'null') ? (
+                    {(prod.images.length > 0 || (prod.featured_image_url && prod.featured_image_url !== 'null')) ? (
                       <Image
-                        src={(prod.images as string[])?.[0] || prod.featured_image_url}
+                        src={prod.images[0] ?? prod.featured_image_url}
                         alt={prod.name}
                         width={40}
                         height={40}
@@ -633,8 +677,7 @@ export function ProductsTable({
                     )}
                   </TableCell>
                   <TableCell className="font-medium text-text-primary">{prod.name}</TableCell>
-                  <TableCell className="text-text-secondary">{prod.category?.name || 'N/A'}</TableCell>
-                  
+                  <TableCell className="text-text-secondary">{prod.category?.name ?? 'N/A'}</TableCell>
                   <TableCell>
                     {prod.badge && prod.badge !== 'None' ? (
                       <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-brand/10 text-brand border border-brand/20">
@@ -652,14 +695,18 @@ export function ProductsTable({
                           : 'bg-surface-elevated text-text-secondary'
                       }`}
                     >
-                      {prod.status}
+                      {prod.status === 'Display' ? 'Published' : 'Draft'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleEditClick(prod.id)}>
                       Edit
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(prod.id)}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setConfirmDeleteId(prod.id)}
+                    >
                       Delete
                     </Button>
                   </TableCell>
@@ -667,7 +714,7 @@ export function ProductsTable({
               ))}
               {initialData.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-text-secondary">
+                  <TableCell colSpan={6} className="text-center py-12 text-text-secondary">
                     No products found.
                   </TableCell>
                 </TableRow>

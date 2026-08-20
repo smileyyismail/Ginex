@@ -2,15 +2,19 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { toast } from 'sonner';
+import imageCompression from 'browser-image-compression';
+
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { uploadImage } from '@/actions/storage';
-import imageCompression from 'browser-image-compression';
+import { useObjectUrl } from './use-object-url';
 
-async function compressImage(file: File) {
+async function compressImage(file: File): Promise<File> {
   try {
     const compressedBlob = await imageCompression(file, {
       maxSizeMB: 0.8,
@@ -20,14 +24,10 @@ async function compressImage(file: File) {
     });
     return new File([compressedBlob], file.name, { type: 'image/webp' });
   } catch (error) {
-    console.error("Compression error:", error);
+    console.error('Compression error:', error);
     return file;
   }
 }
-
-import { toast } from 'sonner';
-import Image from 'next/image';
-import { useObjectUrl } from './use-object-url';
 
 interface SimpleAdminTableProps<T> {
   title: string;
@@ -41,29 +41,33 @@ interface SimpleAdminTableProps<T> {
   onDelete: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function SimpleAdminTable<T extends { id: string; name: string; slug: string; description?: string | null }>({
-  title,
-  description,
-  data,
-  imageField,
-  imageLabel,
-  storageFolder,
-  onCreate,
-  onUpdate,
-  onDelete,
-}: SimpleAdminTableProps<T>) {
+export function SimpleAdminTable<T extends { id: string; name: string; slug: string; description?: string | null }>(
+  {
+    title,
+    description,
+    data,
+    imageField,
+    imageLabel,
+    storageFolder,
+    onCreate,
+    onUpdate,
+    onDelete,
+  }: SimpleAdminTableProps<T>
+) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', image_url: '' });
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  // Inline delete confirmation: holds the id pending deletion
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const previewUrl = useObjectUrl(file);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       let uploadedUrl = formData.image_url;
       if (file) {
@@ -97,18 +101,18 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
     }
   }
 
-  async function handleDelete(id: string) {
-    if (confirm(`Are you sure you want to delete this ${title.toLowerCase()}?`)) {
-      try {
-        const res = await onDelete(id);
-        if (res?.error) toast.error(res.error);
-        else {
-          toast.success(`${title} deleted`);
-          router.refresh();
-        }
-      } catch (err) {
-        toast.error((err as Error).message || 'An error occurred');
+  async function handleDeleteConfirmed(id: string) {
+    try {
+      const res = await onDelete(id);
+      if (res?.error) toast.error(res.error);
+      else {
+        toast.success(`${title} deleted`);
+        router.refresh();
       }
+    } catch (err) {
+      toast.error((err as Error).message || 'An error occurred');
+    } finally {
+      setConfirmDeleteId(null);
     }
   }
 
@@ -120,11 +124,11 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
   }
 
   function handleEditClick(item: T) {
-    setFormData({ 
-      name: item.name, 
-      slug: item.slug, 
-      description: item.description || '', 
-      image_url: (item[imageField] as string) || '' 
+    setFormData({
+      name: item.name,
+      slug: item.slug,
+      description: item.description ?? '',
+      image_url: (item[imageField] as string) ?? '',
     });
     setEditingId(item.id);
     setFile(null);
@@ -133,6 +137,43 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
 
   return (
     <div>
+      {/* ─── Inline delete confirmation ──────────────────────────────────────── */}
+      {confirmDeleteId !== null && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="sat-delete-title"
+          aria-describedby="sat-delete-desc"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        >
+          <div className="bg-surface border border-border-subtle rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
+            <h2 id="sat-delete-title" className="text-lg font-bold text-text-primary mb-2">
+              Delete {title}?
+            </h2>
+            <p id="sat-delete-desc" className="text-sm text-text-secondary mb-6">
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmDeleteId(null)}
+                autoFocus
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleDeleteConfirmed(confirmDeleteId)}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-text-primary">{title}</h2>
@@ -150,28 +191,28 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="simple-name" className="text-sm font-semibold mb-1.5 block">Name</label>
-                  <Input 
+                  <Input
                     id="simple-name"
-                    name="name" 
+                    name="name"
                     value={formData.name}
                     placeholder="e.g. Name"
                     onChange={(e) => {
                       const name = e.target.value;
                       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-                      setFormData({...formData, name, slug: editingId ? formData.slug : slug});
+                      setFormData({ ...formData, name, slug: editingId ? formData.slug : slug });
                     }}
-                    required 
+                    required
                   />
                 </div>
                 <div>
                   <label htmlFor="simple-slug" className="text-sm font-semibold mb-1.5 block">URL Slug</label>
-                  <Input 
+                  <Input
                     id="simple-slug"
-                    name="slug" 
+                    name="slug"
                     value={formData.slug}
                     placeholder="e.g. slug"
-                    onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                    required 
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    required
                   />
                 </div>
               </div>
@@ -193,9 +234,9 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
                     </div>
                   )}
                   <div className="flex-1">
-                    <Input 
+                    <Input
                       id="simple-image"
-                      type="file" 
+                      type="file"
                       accept="image/*"
                       className="bg-surface"
                       onChange={(e) => {
@@ -210,12 +251,12 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
 
               <div>
                 <label htmlFor="simple-description" className="text-sm font-semibold mb-1.5 block">Description</label>
-                <Textarea 
+                <Textarea
                   id="simple-description"
-                  name="description" 
+                  name="description"
                   value={formData.description}
                   placeholder="A short description..."
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="h-24"
                 />
               </div>
@@ -232,7 +273,7 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <div className="bg-surface rounded-xl border border-border-subtle shadow-sm overflow-hidden">
         <Table>
           <TableHeader className="bg-surface-elevated/50">
@@ -248,22 +289,38 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
               <TableRow key={item.id}>
                 <TableCell>
                   {item[imageField] ? (
-                    <Image src={item[imageField] as string} alt={item.name} width={32} height={32} className="h-8 w-8 object-contain" />
+                    <Image
+                      src={item[imageField] as string}
+                      alt={item.name}
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 object-contain"
+                    />
                   ) : (
-                    <div className="h-8 w-8 bg-surface-elevated rounded-full flex items-center justify-center text-xs text-text-secondary">N/A</div>
+                    <div className="h-8 w-8 bg-surface-elevated rounded-full flex items-center justify-center text-xs text-text-secondary">
+                      N/A
+                    </div>
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell className="text-text-secondary">{item.slug}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm" onClick={() => handleEditClick(item)}>Edit</Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>Delete</Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmDeleteId(item.id)}
+                  >
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
             {data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12 text-text-secondary">No {title.toLowerCase()} found.</TableCell>
+                <TableCell colSpan={4} className="text-center py-12 text-text-secondary">
+                  No {title.toLowerCase()} found.
+                </TableCell>
               </TableRow>
             )}
           </TableBody>

@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   try {
     const product = await getProduct(slug);
     if (!product || product.status !== 'Display') return { title: 'Product Not Found' };
-    const imageUrl = (product.images as string[])?.[0] || product.featured_image_url;
+    const imageUrl = product.images[0] ?? product.featured_image_url;
     return {
       title: `${product.name} | Ginex`,
       description: product.description || `Buy ${product.name} at Ginex — premium mobile accessories.`,
@@ -50,13 +50,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   if (!product || product.status !== 'Display') notFound();
 
+  const imageUrl = product.images[0] ?? product.featured_image_url;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    image: (product.images as string[])?.[0] || product.featured_image_url,
+    image: imageUrl,
     description: product.description,
-    brand: { '@type': 'Brand', name: product.brand?.name || 'Ginex' },
+    brand: { '@type': 'Brand', name: 'Ginex' },
     sku: product.id || product.slug,
     offers: {
       '@type': 'Offer',
@@ -121,20 +123,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <div className="p-8 lg:p-12 flex flex-col">
             <ScrollReveal direction="right">
 
-              {/* Brand + Category pills */}
+              {/* Category pill */}
               <div className="flex flex-wrap gap-2 mb-7">
-                {product.brand?.name && (
-                  <span
-                    className="text-[10px] font-black uppercase tracking-[0.15em] px-4 py-1.5 rounded-full"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.08))',
-                      border: '1px solid rgba(212,175,55,0.35)',
-                      color: '#D4AF37',
-                    }}
-                  >
-                    {product.brand.name}
-                  </span>
-                )}
                 {product.category?.name && (
                   <span
                     className="text-[10px] font-black uppercase tracking-[0.15em] px-4 py-1.5 rounded-full"

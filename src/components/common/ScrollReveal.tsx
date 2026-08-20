@@ -30,17 +30,22 @@ export function ScrollReveal({
     if (!el) return;
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Skip animation entirely — element is already visible from SSR render
       return;
     }
 
+    // Set hidden state immediately before first paint to avoid FOVC.
+    // This runs synchronously in the effect before the browser paints
+    // the next frame, so users see the hidden → revealed transition
+    // instead of visible → hidden → revealed.
     el.style.opacity = '0';
     el.style.transform = initialTransform;
 
-    let revealTimer: number | undefined;
+    let revealTimer: ReturnType<typeof setTimeout> | undefined;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          revealTimer = window.setTimeout(() => {
+          revealTimer = setTimeout(() => {
             el.style.opacity = '1';
             el.style.transform = 'translate(0,0) scale(1)';
           }, delay);
@@ -53,7 +58,7 @@ export function ScrollReveal({
     observer.observe(el);
     return () => {
       observer.disconnect();
-      if (revealTimer) window.clearTimeout(revealTimer);
+      if (revealTimer !== undefined) clearTimeout(revealTimer);
     };
   }, [delay, initialTransform, threshold]);
 
@@ -62,9 +67,12 @@ export function ScrollReveal({
       ref={ref}
       className={className}
       style={{
+        // SSR render: fully visible for no-JS and prefers-reduced-motion users.
+        // JS will override opacity/transform synchronously in the effect.
         opacity: 1,
         transform: 'translate(0,0) scale(1)',
         transition: `opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1)`,
+        willChange: 'opacity, transform',
       }}
     >
       {children}

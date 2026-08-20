@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import { getPublicProducts } from "@/actions/products";
 import { getCategories } from "@/actions/categories";
 import { Navbar } from "@/components/layout/Navbar";
@@ -10,10 +12,9 @@ import { ContactSection } from "@/components/home/ContactSection";
 import { BrandTrustBar } from "@/components/home/BrandTrustBar";
 import { BrandStorySection } from "@/components/home/BrandStorySection";
 import { FaqSection } from "@/components/home/FaqSection";
+import type { Product } from "@/lib/types";
 
 export const revalidate = 3600;
-
-import { Suspense } from 'react';
 
 async function HomeContent() {
   const [activeProducts, categories] = await Promise.all([
@@ -21,20 +22,20 @@ async function HomeContent() {
     getCategories()
   ]);
 
-  const bestSellers = activeProducts.filter(p => p.badge === 'Best Seller').slice(0, 4);
-  const activeCategories = categories || [];
+  const bestSellers = activeProducts.filter((p: Product) => p.badge === 'Best Seller').slice(0, 4);
+  const activeCategories = categories ?? [];
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: activeProducts.map((product, index) => ({
+    itemListElement: activeProducts.map((product: Product, index: number) => ({
       '@type': 'ListItem',
       position: index + 1,
       item: {
         '@type': 'Product',
         name: product.name,
         url: `https://ginex.com/products/${product.slug}`,
-        image: (product.images as string[])?.[0] || product.featured_image_url,
+        image: product.images[0] ?? product.featured_image_url,
       }
     }))
   };
@@ -72,6 +73,7 @@ async function HomeContent() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at bottom, rgba(212,175,55,0.05) 0%, transparent 60%)' }}
+          aria-hidden="true"
         />
         <div className="container mx-auto px-4 relative z-10">
           <SectionHeader
@@ -99,8 +101,13 @@ export default function Home() {
     <main className="min-h-screen bg-[#0A0A0A] font-sans">
       <Navbar />
       <Suspense fallback={
-        <div className="min-h-[80vh] flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full animate-spin" style={{ border: '3px solid rgba(212,175,55,0.15)', borderTopColor: '#D4AF37' }} />
+        <div className="min-h-[80vh] flex items-center justify-center" aria-label="Loading content">
+          <div
+            className="w-12 h-12 rounded-full animate-spin"
+            style={{ border: '3px solid rgba(212,175,55,0.15)', borderTopColor: '#D4AF37' }}
+            role="status"
+            aria-label="Loading"
+          />
         </div>
       }>
         <HomeContent />

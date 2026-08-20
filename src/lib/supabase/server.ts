@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
@@ -33,8 +35,8 @@ export async function verifyAdmin() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false as const, error: 'Unauthorized' };
   }
 
-  return { success: true, user };
+  return { success: true as const, user };
 }
