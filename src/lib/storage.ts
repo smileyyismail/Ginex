@@ -73,19 +73,43 @@ async function validateImageUpload(file: File, folder: string) {
 export async function uploadImageFile(file: File, folder: string): Promise<string> {
   const { fileExt, contentType } = await validateImageUpload(file, folder);
 
-  const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  const filePath = `${folder}/${fileName}`;
+  let baseName = file.name.substring(0, file.name.lastIndexOf('.'));
+  if (!baseName) baseName = 'image';
+  
+  // Basic sanitization: keep letters, numbers, spaces, hyphens, underscores, parenthesis
+  baseName = baseName.replace(/[^a-zA-Z0-9 \-_()]/g, '').trim();
+  if (!baseName) baseName = 'image';
 
-  const { error } = await supabaseAdmin.storage
-    .from(STORAGE_BUCKET)
-    .upload(filePath, file, {
-      contentType,
-      upsert: false,
-    });
+  let fileName = `${baseName}.${fileExt}`;
+  let filePath = `${folder}/${fileName}`;
+  let attempt = 0;
 
-  if (error) {
-    console.error('Image upload failed:', error.message);
-    throw new Error('Unable to upload image');
+  while (true) {
+    const { error } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .upload(filePath, file, {
+        contentType,
+        upsert: false,
+      });
+
+    if (error) {
+      const errStr = error.message ? error.message.toLowerCase() : '';
+      if (
+        errStr.includes('already exists') || 
+        errStr.includes('duplicate') || 
+        (error as any).statusCode === '409' || 
+        (error as any).statusCode === 409 ||
+        errStr.includes('conflict')
+      ) {
+        attempt++;
+        fileName = `${baseName} (${attempt}).${fileExt}`;
+        filePath = `${folder}/${fileName}`;
+        continue;
+      }
+      console.error('Image upload failed:', error.message);
+      throw new Error('Unable to upload image');
+    }
+    break;
   }
 
   const { data } = supabaseAdmin.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);

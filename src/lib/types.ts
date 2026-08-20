@@ -27,16 +27,6 @@ export interface Category {
   updated_at?: string;
 }
 
-export interface Brand {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  logo_url?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export interface Product {
   id: string;
   name: string;
@@ -44,8 +34,6 @@ export interface Product {
   description?: string;
   /** Foreign key → categories.id. Required when creating/updating. */
   category_id: string;
-  /** Foreign key → brands.id. Required when creating/updating. */
-  brand_id: string;
   /** Primary display image URL. Required. */
   featured_image_url: string;
   /** Gallery images. Defaults to []. */
@@ -62,7 +50,6 @@ export interface Product {
   updated_at?: string;
   // ─── Joined relations (populated by Supabase select joins) ───────────────
   category?: Pick<Category, 'id' | 'name' | 'slug' | 'image_url'>;
-  brand?: Pick<Brand, 'id' | 'name' | 'slug' | 'logo_url'>;
 }
 
 // ─── Admin Form Types ─────────────────────────────────────────────────────────
@@ -77,7 +64,6 @@ export interface ProductFormState {
   slug: string;
   description: string;
   category_id: string;
-  brand_id: string;
   badge: ProductBadge;
   status: ProductStatus;
 }

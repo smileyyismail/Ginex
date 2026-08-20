@@ -16,7 +16,7 @@ export async function getProducts() {
 
   const { data, error } = await supabaseAdmin
     .from('products')
-    .select('*, category:categories(id, name, slug, image_url), brand:brands(id, name, slug, logo_url)')
+    .select('*, category:categories(id, name, slug, image_url)')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
   return data;
@@ -27,7 +27,7 @@ export async function getPublicProducts() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
-    .select('*, category:categories(id, name, slug, image_url), brand:brands(id, name, slug, logo_url)')
+    .select('*, category:categories(id, name, slug, image_url)')
     .eq('status', 'Display')
     .order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
@@ -39,7 +39,7 @@ export async function getProduct(slug: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
-    .select('*, category:categories(*), brand:brands(*)')
+    .select('*, category:categories(*)')
     .eq('slug', slug)
     .single();
   if (error && error.code !== 'PGRST116') throw new Error(error.message);
@@ -52,7 +52,7 @@ export async function getProductForAdmin(slug: string) {
 
   const { data, error } = await supabaseAdmin
     .from('products')
-    .select('*, category:categories(*), brand:brands(*)')
+    .select('*, category:categories(*)')
     .eq('slug', slug)
     .single();
   if (error && error.code !== 'PGRST116') throw new Error('Unable to load product');
@@ -73,7 +73,6 @@ export async function createProduct(
       slug: formData.get('slug') as string,
       description: (formData.get('description') as string) || '',
       category_id: formData.get('category_id') as string,
-      brand_id: formData.get('brand_id') as string,
       featured_image_url: (formData.get('featured_image_url') as string) || '',
       badge: (formData.get('badge') as string) || 'None',
       status: (formData.get('status') as string) || 'Display',
@@ -83,7 +82,7 @@ export async function createProduct(
       return { success: false, error: validatedFields.error.issues[0].message };
     }
 
-    const { name, slug, description, category_id, brand_id, badge, status } = validatedFields.data;
+    const { name, slug, description, category_id, badge, status } = validatedFields.data;
 
     // Duplicate name check
     const { data: existing } = await supabaseAdmin
@@ -115,7 +114,6 @@ export async function createProduct(
         slug,
         description,
         category_id,
-        brand_id,
         featured_image_url: finalFeaturedUrl,
         images: safeImages,
         badge,
@@ -123,7 +121,7 @@ export async function createProduct(
         specifications: safeSpecs,
         features: safeFeatures,
       }])
-      .select('id, name, slug, description, category_id, brand_id, featured_image_url, badge, status, specifications, features, images, created_at, updated_at')
+      .select('id, name, slug, description, category_id, featured_image_url, badge, status, specifications, features, images, created_at, updated_at')
       .single();
 
     if (error) return { success: false, error: getSafeMutationError(error, 'Unable to create product') };
@@ -152,7 +150,6 @@ export async function updateProduct(
       slug: formData.get('slug') as string,
       description: (formData.get('description') as string) || '',
       category_id: formData.get('category_id') as string,
-      brand_id: formData.get('brand_id') as string,
       featured_image_url: (formData.get('featured_image_url') as string) || '',
       badge: (formData.get('badge') as string) || 'None',
       status: (formData.get('status') as string) || 'Display',
@@ -162,7 +159,7 @@ export async function updateProduct(
       return { success: false, error: validatedFields.error.issues[0].message };
     }
 
-    const { name, slug, description, category_id, brand_id, badge, status } = validatedFields.data;
+    const { name, slug, description, category_id, badge, status } = validatedFields.data;
 
     // Duplicate name check (exclude the product being edited)
     const { data: existing } = await supabaseAdmin
@@ -202,7 +199,6 @@ export async function updateProduct(
         slug,
         description,
         category_id,
-        brand_id,
         featured_image_url: finalFeaturedUrl,
         images: safeImages,
         badge,

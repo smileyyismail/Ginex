@@ -2,14 +2,13 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { Brand, Category, Product } from '@/lib/types';
+import { Category, Product } from '@/lib/types';
 import { ProductGrid } from './ProductGrid';
 
 interface ProductListingsProps {
   initialProducts: Product[];
   categories: Category[];
-  brands: Brand[];
-  initialCategory?: string;
+    initialCategory?: string;
   initialBrand?: string;
   initialBadge?: string;
   initialSearch?: string;
@@ -19,15 +18,12 @@ interface FilterContentProps {
   idPrefix: string;
   search: string;
   selectedCategory: string | null;
-  selectedBrand: string | null;
-  selectedBadge: string | null;
+    selectedBadge: string | null;
   categories: Category[];
-  brands: Brand[];
-  badgeOptions: string[];
+    badgeOptions: string[];
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: string | null) => void;
-  onBrandChange: (value: string | null) => void;
-  onBadgeChange: (value: string | null) => void;
+    onBadgeChange: (value: string | null) => void;
 }
 
 function normalizeQueryValue(value?: string | null) {
@@ -51,14 +47,12 @@ function FilterContent({
   idPrefix,
   search,
   selectedCategory,
-  selectedBrand,
   selectedBadge,
   categories,
-  brands,
-  badgeOptions,
+    badgeOptions,
   onSearchChange,
   onCategoryChange,
-  onBrandChange,
+  
   onBadgeChange,
 }: FilterContentProps) {
   const searchId = `${idPrefix}-search`;
@@ -102,27 +96,7 @@ function FilterContent({
         ))}
       </FilterGroup>
 
-      <FilterGroup title="Brands">
-        <button
-          type="button"
-          className={filterButtonClass(!selectedBrand)}
-          aria-pressed={!selectedBrand}
-          onClick={() => onBrandChange(null)}
-        >
-          All Brands
-        </button>
-        {brands.map((brand) => (
-          <button
-            type="button"
-            key={brand.id}
-            className={filterButtonClass(selectedBrand === brand.id)}
-            aria-pressed={selectedBrand === brand.id}
-            onClick={() => onBrandChange(brand.id)}
-          >
-            {brand.name}
-          </button>
-        ))}
-      </FilterGroup>
+      
 
       {badgeOptions.length > 0 && (
         <FilterGroup title="Highlights">
@@ -165,20 +139,16 @@ function FilterGroup({ title, children }: { title: string; children: ReactNode }
 export function ProductListings({
   initialProducts,
   categories,
-  brands,
-  initialCategory,
+    initialCategory,
   initialBrand,
   initialBadge,
   initialSearch = '',
 }: ProductListingsProps) {
   const initialCategoryId =
     categories.find((category) => category.slug === initialCategory || category.id === initialCategory)?.id ?? null;
-  const initialBrandId = brands.find((brand) => brand.slug === initialBrand || brand.id === initialBrand)?.id ?? null;
-
   const [search, setSearch] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategoryId);
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(initialBrandId);
-  const [selectedBadge, setSelectedBadge] = useState<string | null>(
+    const [selectedBadge, setSelectedBadge] = useState<string | null>(
     initialBadge ? normalizeQueryValue(initialBadge) : null
   );
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -200,29 +170,26 @@ export function ProductListings({
 
     return initialProducts.filter((product) => {
       const matchSearch = normalizedSearch
-        ? [product.name, product.description, product.category?.name, product.brand?.name]
+        ? [product.name, product.description, product.category?.name]
             .filter(Boolean)
             .some((value) => value!.toLowerCase().includes(normalizedSearch))
         : true;
       const matchCategory = selectedCategory ? product.category_id === selectedCategory : true;
-      const matchBrand = selectedBrand ? product.brand_id === selectedBrand : true;
+      
       const matchBadge = selectedBadge ? normalizeQueryValue(product.badge) === selectedBadge : true;
 
-      return matchSearch && matchCategory && matchBrand && matchBadge;
+      return matchSearch && matchCategory && matchBadge;
     });
-  }, [initialProducts, search, selectedCategory, selectedBrand, selectedBadge]);
+  }, [initialProducts, search, selectedCategory, selectedBadge]);
 
   const filterProps = {
     search,
     selectedCategory,
-    selectedBrand,
     selectedBadge,
     categories,
-    brands,
-    badgeOptions,
+        badgeOptions,
     onSearchChange: setSearch,
     onCategoryChange: setSelectedCategory,
-    onBrandChange: setSelectedBrand,
     onBadgeChange: setSelectedBadge,
   };
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getBrands } from "@/actions/brands";
 import { getCategories } from "@/actions/categories";
 import { getPublicProducts } from "@/actions/products";
 import { Footer } from "@/components/layout/Footer";
@@ -17,11 +16,10 @@ import { Suspense } from 'react';
 import { ProductGridSkeleton } from '@/components/common/Skeletons';
 
 async function ProductsContent({ filters }: { filters: { category?: string; brand?: string; badge?: string; q?: string } }) {
-  const [activeProducts, categories, brands] = await Promise.all([
+  const [activeProducts, categories] = await Promise.all([
     getPublicProducts(),
     getCategories(),
-    getBrands(),
-  ]);
+    ]);
 
   const collectionJsonLd = {
     '@context': 'https://schema.org',
@@ -31,7 +29,7 @@ async function ProductsContent({ filters }: { filters: { category?: string; bran
     url: 'https://ginex.com/products',
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: activeProducts.map((product, index) => ({
+      itemListElement: activeProducts.map((product: any, index: number) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -71,10 +69,9 @@ async function ProductsContent({ filters }: { filters: { category?: string; bran
         <ProductListings
           initialProducts={activeProducts}
           categories={categories || []}
-          brands={brands || []}
+          
           initialCategory={filters.category}
-          initialBrand={filters.brand}
-          initialBadge={filters.badge}
+                    initialBadge={filters.badge}
           initialSearch={filters.q}
         />
       </div>

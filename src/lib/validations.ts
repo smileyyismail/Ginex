@@ -39,13 +39,6 @@ export const CategorySchema = z.object({
   image_url: optionalManagedImageUrlSchema,
 });
 
-export const BrandSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(120, 'Name must be 120 characters or fewer'),
-  slug: slugSchema,
-  description: optionalTextSchema,
-  logo_url: optionalManagedImageUrlSchema,
-});
-
 const productStatuses = ['Display', 'Hide'] as const;
 const productBadges = ['None', 'Trending', 'New', 'Featured', 'Best Seller'] as const;
 
@@ -54,7 +47,6 @@ export const ProductSchema = z.object({
   slug: slugSchema,
   description: z.string().trim().max(500, 'Description must be 500 characters or fewer').optional(),
   category_id: z.uuid('Category is required'),
-  brand_id: z.uuid('Brand is required'),
   featured_image_url: optionalManagedImageUrlSchema,
   badge: z.enum(productBadges).default('None'),
   status: z.enum(productStatuses).default('Display'),

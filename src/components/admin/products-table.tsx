@@ -13,7 +13,7 @@ import { uploadImage } from '@/actions/storage';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import Image from 'next/image';
-import type { Product, Category, Brand, ProductFormState } from '@/lib/types';
+import type { Product, Category, ProductFormState } from '@/lib/types';
 import {
   DndContext,
   closestCenter,
@@ -108,7 +108,7 @@ const DEFAULT_FORM: ProductFormState = {
   slug: '',
   description: '',
   category_id: '',
-  brand_id: '',
+  
   badge: 'None',
   status: 'Display',
 };
@@ -116,11 +116,10 @@ const DEFAULT_FORM: ProductFormState = {
 export function ProductsTable({
   initialData,
   categories,
-  brands,
-}: {
+  }: {
   initialData: Product[];
   categories: Category[];
-  brands: Brand[];
+  
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -179,7 +178,7 @@ export function ProductsTable({
         slug: derivedSlug,
         description: fullProduct.description || '',
         category_id: fullProduct.category_id || '',
-        brand_id: fullProduct.brand_id || '',
+        
         badge: (fullProduct.badge as ProductFormState['badge']) || 'None',
         status: (fullProduct.status as ProductFormState['status']) || 'Display',
       });
@@ -237,7 +236,7 @@ export function ProductsTable({
       form.append('slug', slugFromName);
       form.append('description', formData.description);
       form.append('category_id', formData.category_id);
-      form.append('brand_id', formData.brand_id);
+      
       form.append('badge', formData.badge);
       form.append('status', uiStatus === 'Published' ? 'Display' : 'Hide');
 
@@ -377,7 +376,7 @@ export function ProductsTable({
                 </div>
               </div>
 
-              {/* Row 3: Category, Brand */}
+              {/* Row 3: Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="product-category" className="text-sm font-semibold mb-1.5 block">Category</label>
@@ -399,26 +398,7 @@ export function ProductsTable({
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label htmlFor="product-brand" className="text-sm font-semibold mb-1.5 block">Brand</label>
-                  <Select
-                    value={formData.brand_id}
-                    onValueChange={(val) => setFormData({ ...formData, brand_id: val ?? '' })}
-                  >
-                    <SelectTrigger id="product-brand">
-                      <SelectValue placeholder="Select Brand">
-                        {formData.brand_id
-                          ? brands.find((b) => b.id === formData.brand_id)?.name
-                          : 'Select Brand'}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {brands.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                
               </div>
 
               {/* Row 4: Status, Badge */}
@@ -608,7 +588,7 @@ export function ProductsTable({
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Brand</TableHead>
+                
                 <TableHead>Badge</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -634,7 +614,7 @@ export function ProductsTable({
                   </TableCell>
                   <TableCell className="font-medium text-text-primary">{prod.name}</TableCell>
                   <TableCell className="text-text-secondary">{prod.category?.name || 'N/A'}</TableCell>
-                  <TableCell className="text-text-secondary">{prod.brand?.name || 'N/A'}</TableCell>
+                  
                   <TableCell>
                     {prod.badge && prod.badge !== 'None' ? (
                       <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-brand/10 text-brand border border-brand/20">
