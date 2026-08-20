@@ -10,6 +10,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createProduct, updateProduct, deleteProduct, getProductForAdmin } from '@/actions/products';
 import { uploadImage } from '@/actions/storage';
+import imageCompression from 'browser-image-compression';
+
+async function compressImage(file: File) {
+  try {
+    const compressedBlob = await imageCompression(file, {
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1600,
+      useWebWorker: true,
+      fileType: 'image/webp'
+    });
+    return new File([compressedBlob], file.name, { type: 'image/webp' });
+  } catch (error) {
+    console.error("Compression error:", error);
+    return file;
+  }
+}
+
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import Image from 'next/image';
@@ -220,7 +237,10 @@ export function ProductsTable({
       const finalGalleryImages = await Promise.all(
         galleryItems.map(async (item) => {
           if (item.url) return item.url;
-          if (item.file) return await uploadImage(item.file, 'products');
+          if (item.file) {
+              const compressed = await compressImage(item.file);
+              return await uploadImage(compressed, 'products');
+            }
           return '';
         })
       );

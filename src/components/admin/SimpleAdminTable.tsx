@@ -8,6 +8,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { uploadImage } from '@/actions/storage';
+import imageCompression from 'browser-image-compression';
+
+async function compressImage(file: File) {
+  try {
+    const compressedBlob = await imageCompression(file, {
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1600,
+      useWebWorker: true,
+      fileType: 'image/webp'
+    });
+    return new File([compressedBlob], file.name, { type: 'image/webp' });
+  } catch (error) {
+    console.error("Compression error:", error);
+    return file;
+  }
+}
+
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useObjectUrl } from './use-object-url';
@@ -50,7 +67,8 @@ export function SimpleAdminTable<T extends { id: string; name: string; slug: str
     try {
       let uploadedUrl = formData.image_url;
       if (file) {
-        uploadedUrl = await uploadImage(file, storageFolder);
+        const compressed = await compressImage(file);
+        uploadedUrl = await uploadImage(compressed, storageFolder);
       }
 
       const form = new FormData();
