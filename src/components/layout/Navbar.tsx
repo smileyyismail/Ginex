@@ -34,10 +34,13 @@ export function Navbar() {
     };
   }, [isMobileMenuOpen]);
 
+  const [prevPathname, setPrevPathname] = useState(pathname);
+
   // Close mobile menu on route change
-  useEffect(() => {
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <nav

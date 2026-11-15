@@ -42,7 +42,7 @@ async function main() {
     }
 
     let newFeaturedUrl = p.featured_image_url;
-    let newImagesUrls: string[] = [];
+    const newImagesUrls: string[] = [];
     
     let counter = 1;
 

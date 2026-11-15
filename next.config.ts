@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
-const supabaseHost = 'cqrzlpbnzqluvukwzchp.supabase.co';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let supabaseHost = 'cqrzlpbnzqluvukwzchp.supabase.co';
+if (supabaseUrl) {
+  try {
+    supabaseHost = new URL(supabaseUrl).hostname;
+  } catch {
+    // Keep fallback host
+  }
+}
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const nextConfig: NextConfig = {

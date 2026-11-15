@@ -1,12 +1,13 @@
 {
-  "name": "temp-app",
+  "name": "ginex",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "cleanup:images": "tsx scripts/cleanup-images.ts"
   },
   "dependencies": {
