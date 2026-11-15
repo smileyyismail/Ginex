@@ -17,7 +17,7 @@ export default function Loading() {
             GINEX<span style={{ color: '#D4AF37' }}>.</span>
           </p>
           <p className="text-xs text-[#A1A1AA] uppercase tracking-widest font-medium mt-1">
-            Loading...
+            Loading..
           </p>
         </div>
       </div>
